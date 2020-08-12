@@ -1,11 +1,12 @@
 # ETC5521 Assignment 1 
 
-Team name: [FILL]
+Team name: goanna
 
 Team members:
 
-* [FILL]
-* [FILL]
+* XUE WANG
+* XITONG HE
+* CUIPING WEI
 
 # Steps
 
