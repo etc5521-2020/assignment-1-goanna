@@ -6,10 +6,40 @@ author:
   - XUE WANG
   - XITONG HE
   - CUIPING WEI
+bibliography: references.bib
+biblio-style: authoryear-comp
+link-citations: yes
+linestretch: 2
 date: "`r Sys.Date()`"
 output: 
-  html_document
+  bookdown::html_document2: 
+  theme: paper
+  citation_package: biblatex
 ---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, messages=FALSE, warning=FALSE, fig.pos = 'H', fig.align ='center')
+```
+
+```{r load-libraries, message=FALSE}
+library(readr)
+library(tidyverse)
+library(kableExtra)
+library(mapview)
+library(here)
+library(knitr)
+library(maps)
+library(plotly)
+```
+
+```{r read-data, message=FALSE, warning=FALSE}
+# Get the Data
+rainfall <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-01-07/rainfall.csv')
+temperature <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-01-07/temperature.csv')
+nasa_fire <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-01-07/MODIS_C6_Australia_and_New_Zealand_7d.csv')
+
+```
+
 
 [This assignment is for ETC5521 Assignment 1 by Team `r rmarkdown::metadata$team` comprising of `r knitr::combine_words(rmarkdown::metadata$author)`.]{style="color:#006DAE;"}
 
