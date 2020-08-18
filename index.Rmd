@@ -50,6 +50,79 @@ nasa_fire <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/
 
 # Data description
 
+## Australua fire data
+
+The `fire` data comes from NASA "Active Fires Dataset" via the MODIS fire product collection at https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-01-07/MODIS_C6_Australia_and_New_Zealand_7d.csv. MODIS active fire product is detected the fire data in every 5 minutes and collected through each tile with horizontal and vertical coordinate. The data contains the fire information of Australia and New Zealand with `r nrow(fire)` observations from 2019-12-29 to 2020-01-05. The variables included in the data are as the following the table:
+
+```{r fire-data}
+fire <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-01-07/MODIS_C6_Australia_and_New_Zealand_7d.csv')
+glimpse(fire)
+
+fire_data <- data.frame(
+  Variable = c("latitude", "longitude", "brightness", "scan", "track", "acq_date", "act_time", "satellite", "confidence", "version", "dbright_t31","frq", "day_night"),
+  Description = c("Center of 1km fire pixel but not necessarily the actual location of the fire as one or more fires can be detected within the 1km pixel.", 
+                  "Center of 1km fire pixel but not necessarily the actual location of the fire as one or more fires can be detected within the 1km pixel.", 
+                  "Channel 21/22 brightness temperature of the fire pixel measured in Kelvin.", 
+                  "The algorithm produces 1km fire pixels but MODIS pixels get bigger toward the edge of scan. Scan and track reflect actual pixel size.", 
+                  "The algorithm produces 1km fire pixels but MODIS pixels get bigger toward the edge of scan. Scan and track reflect actual pixel size.",
+                  "Date of MODIS acquisition.",
+                  "Time of acquisition/overpass of the satellite (in UTC).",
+                  "A = Aqua and T = Terra.",
+                  "This value is based on a collection of intermediate algorithm quantities used in the detection process. It is intended to help users gauge the quality of individual hotspot/fire pixels. Confidence estimates range between 0 and 100% and are assigned one of the three fire classes (low-confidence fire, nominal-confidence fire, or high-confidence fire).",
+                  "Version identifies the collection (e.g. MODIS Collection 6) and source of data processing: Near Real-Time (NRT suffix added to collection) or Standard Processing (collection only). '6.0NRT' - Collection 6 NRT processing.'6.0' - Collection 6 Standard processing. Find out more on collections and on the differences between FIRMS data sourced from LANCE FIRMS and University of Maryland.",
+                  "Channel 31 brightness temperature of the fire pixel measured in Kelvin.", 
+                  "Depicts the pixel-integrated fire radiative power in MW (megawatts).",
+                  "D = Daytime, N = Nighttime")) 
+fire_data %>%
+  kable(caption = "Australia_fire.csv") %>%
+  kable_styling(bootstrap_options = "striped", 
+                full_width = F, 
+                position = "left")
+```
+
+## Climate data
+
+There are two datasets consisting in the climate data such as rainfall and temperature data which are obtained from the Australian Bureau of Meterology (http://www.bom.gov.au/?ref=logo),of which is used the weather station to measure a variety of aspects of the weather. As these two data sets are recorded the temperature and rainfall data which can be analyzed the situation of weather so that these two data sets are the observations as well. In addition, the rainfall data has consisted of six cities: Perth, Adelaide, Melbourne, Sydney,Brisbane and Canberra. The data structure is shown as the below table.
+
+```{r temp-data}
+temperature <- tibble(Variable = c("city_name", "date", "temperature", "temp_type", "site_name"),
+                          Class = c( "character",  "double", "double","character", "character"),
+                          Description = c("City Name", 
+                                          "Date", 
+                                          "Temperature in Celsius", 
+                                          "Temperature type (min/max daily)", 
+                                          "Actual site/weather station")) 
+temperature %>%
+  kable(caption = "Temperature.csv") %>%
+  kable_styling(bootstrap_options = "striped", 
+                full_width = F, 
+                position = "left")
+```
+
+
+```{r rainfall-data}
+rainfall <- data.frame(Variable = c("station_code", "city_name","year","month","day","rainfall","period","quality","lat","long","station_name"),
+                          Class = c("character", "character", "double","character","character", "double", "double","character","double","double", "character"),
+                          Description = c("Station Code",
+                                          "City Name", 
+                                          "year",
+                                          "month",
+                                          "day",
+                                          "Trainfall in millimeters", 
+                                          "how many days was it collected across",
+                                          "	Certified quality or not",
+                                          "latitude",
+                                          "longitude",
+                                          "Station Name")) 
+rainfall%>%
+  kable(caption = "rainfall.csv") %>%
+  kable_styling(bootstrap_options = "striped", 
+                full_width = F, 
+                position = "left")
+```
+
+
+
 # Analysis and findings
 
 [FILL] Should include at least one plot or numerical summary for each of your questions, that helps the reader arrive at an answer. You should also write paragraphs describing the methods, summaries and findings. 
