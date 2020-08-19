@@ -16,6 +16,7 @@ output:
   theme: paper
   citation_package: biblatex
 ---
+[This assignment is for ETC5521 Assignment 1 by Team `r rmarkdown::metadata$team` comprising of `r knitr::combine_words(rmarkdown::metadata$author)`.]{style="color:#006DAE;"}
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, messages=FALSE, warning=FALSE, fig.pos = 'H', fig.align ='center')
@@ -32,34 +33,91 @@ library(maps)
 library(plotly)
 ```
 
-```{r read-data, message=FALSE, warning=FALSE}
-# Get the Data
-rainfall <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-01-07/rainfall.csv')
-temperature <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-01-07/temperature.csv')
-nasa_fire <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-01-07/MODIS_C6_Australia_and_New_Zealand_7d.csv')
-
-```
-
-
-[This assignment is for ETC5521 Assignment 1 by Team `r rmarkdown::metadata$team` comprising of `r knitr::combine_words(rmarkdown::metadata$author)`.]{style="color:#006DAE;"}
-
 
 # Introduction and motivation
 
-[FILL] Give the bigger picture of the data, and inspire the reader to learn more about the problem by reading your analysis. 
+Bushfires that raged in Australia from September 2019 to early 2020 captured the attention of people around the world, especially the out-of-control bushfires in New South Wales in late December 2019 and early 2020. What caused the bushfires that lasted for four months? Is it closely related to global climate change?   
+The report focuses on the relationship between temperature change, rainfall change and day-night factors on bushfires.
+
 
 # Data description
 
+This section mainly introduces the data, data sources and data description.  
+There are three data sets used on this analysis, and the cleaned data is obtained from [GitHub tidytuesday](https://github.com/rfordatascience/tidytuesday/blob/master/data/2020/2020-01-07/readme.md).  
+
+```{r tem-function}
+# clean temperature
+# expand the time range of temperature
+
+name_df <- tribble(
+  ~station_code, ~city_name, ~site_name,
+  "9021", "PERTH", "PERTH AIRPORT",
+  "18192", "PORT", "PORT LINCOLN AWS",
+  "23090", "KENT", "KENT TOWN",
+  "40842", "BRISBANE", "BRISBANE AERO",
+  "66062", "SYDNEY", "SYDNEY (OBSERVATORY HILL)",
+  "70351", "CANBERRA", "CANBERRA AIRPORT",
+  "86338", "MELBOURNE", "MELBOURNE (OLYMPIC PARK)"
+)
+
+read_temp_list <- list.files(here::here("data", "2020-01-07")) %>% 
+  .[str_detect(., "IDCJAC0010|IDCJAC0011")]
+
+read_clean_temp_data <- function(file_name){
+  
+  temp_descrip <- if_else(str_detect(file_name, "IDCJAC0010"), "max", "min")
+  
+  read_csv(here::here("data", "2020-01-07", file_name)) %>% 
+    janitor::clean_names() %>% 
+    rename(station_code = bureau_of_meteorology_station_number,
+           temperature = contains("degree")) %>% 
+    mutate(temp_type = temp_descrip,
+           date = paste0(year,"-",month,"-",day),
+           station_code = as.character(station_code)) %>% 
+    left_join(name_df, by = "station_code") %>% 
+    select(city_name, date, temperature, temp_type, site_name) 
+  
+}
+```
+
+
+```{r tem-expand, message=FALSE}
+# map raw data
+clean_temp_df <- read_temp_list %>% 
+  purrr::map(read_clean_temp_data) %>% 
+  bind_rows() %>% 
+  mutate(date = as.Date(date, "%Y-%m-%d"))%>% 
+  filter(date > "2019-05-31" & date <= "2020-01-05") 
+```
+
+
+```{r read-data, message=FALSE, warning=FALSE}
+# Get the cleaned data from Github
+# the time range for old temperature data is from 1910-01-01 to 2019-05-31
+rainfall <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-01-07/rainfall.csv')
+temperature_old <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-01-07/temperature.csv')
+nasa_fire <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-01-07/MODIS_C6_Australia_and_New_Zealand_7d.csv')
+
+# merge two temperature data sets to get final temperature data
+temperature_new <- bind_rows(temperature_old, clean_temp_df) 
+
+# write temperature data
+write_csv(temperature_new, here::here("data/2020-01-07/","temperature_new.csv"))
+
+# Get the new temperature data from 1910-01-01 to 2020-01-05
+temperature <- read.csv("data/2020-01-07/temperature_new.csv") 
+```
+
+
 ## Australua fire data
 
-The `fire` data comes from NASA "Active Fires Dataset" via the MODIS fire product collection at https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-01-07/MODIS_C6_Australia_and_New_Zealand_7d.csv. MODIS active fire product is detected the fire data in every 5 minutes and collected through each tile with horizontal and vertical coordinate. The data contains the fire information of Australia and New Zealand with `r nrow(fire)` observations from 2019-12-29 to 2020-01-05. The variables included in the data are as the following the table:
+The `fire` data source is from [NASA](https://earthdata.nasa.gov/earth-observation-data/near-real-time/firms/active-fire-data) "Active Fires Dataset" via the MODIS fire product collection. MODIS active fire product is detected the fire data in every 5 minutes and collected through each tile with horizontal and vertical coordinate. The data contains the fire information of Australia with `r nrow(nasa_fire)` observations from 2019-12-29 to 2020-01-05. The variables information included in the data are as the following table:
 
-```{r fire-data}
-fire <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-01-07/MODIS_C6_Australia_and_New_Zealand_7d.csv')
-glimpse(fire)
-
+```{r fire-data, message=FALSE}
 fire_data <- data.frame(
-  Variable = c("latitude", "longitude", "brightness", "scan", "track", "acq_date", "act_time", "satellite", "confidence", "version", "dbright_t31","frq", "day_night"),
+  Variable = c("latitude", "longitude", "brightness", "scan", 
+               "track", "acq_date", "act_time", "satellite", 
+               "confidence", "version", "dbright_t31","frq", "day_night"),
   Description = c("Center of 1km fire pixel but not necessarily the actual location of the fire as one or more fires can be detected within the 1km pixel.", 
                   "Center of 1km fire pixel but not necessarily the actual location of the fire as one or more fires can be detected within the 1km pixel.", 
                   "Channel 21/22 brightness temperature of the fire pixel measured in Kelvin.", 
@@ -72,37 +130,54 @@ fire_data <- data.frame(
                   "Version identifies the collection (e.g. MODIS Collection 6) and source of data processing: Near Real-Time (NRT suffix added to collection) or Standard Processing (collection only). '6.0NRT' - Collection 6 NRT processing.'6.0' - Collection 6 Standard processing. Find out more on collections and on the differences between FIRMS data sourced from LANCE FIRMS and University of Maryland.",
                   "Channel 31 brightness temperature of the fire pixel measured in Kelvin.", 
                   "Depicts the pixel-integrated fire radiative power in MW (megawatts).",
-                  "D = Daytime, N = Nighttime")) 
+                  "D = Daytime, N = Nighttime"))
+
 fire_data %>%
-  kable(caption = "Australia_fire.csv") %>%
+  kable(caption = "Australia fire data") %>%
   kable_styling(bootstrap_options = "striped", 
                 full_width = F, 
                 position = "left")
 ```
 
+
 ## Climate data
 
-There are two datasets consisting in the climate data such as rainfall and temperature data which are obtained from the Australian Bureau of Meterology (http://www.bom.gov.au/?ref=logo),of which is used the weather station to measure a variety of aspects of the weather. As these two data sets are recorded the temperature and rainfall data which can be analyzed the situation of weather so that these two data sets are the observations as well. In addition, the rainfall data has consisted of six cities: Perth, Adelaide, Melbourne, Sydney,Brisbane and Canberra. The data structure is shown as the below table.
+For climate data, temperature and rainfall was gathered from the Australian [Bureau of Meterology (BoM)](http://www.bom.gov.au/?ref=logo), of which is used the weather station to measure a variety of aspects of the weather. `Rainfall` data was sourced from six major Australian cities: Perth, Adelaide, Melbourne, Sydney,Brisbane and Canberra, and the cleaned data is obtained from [GitHub tidytuesday](https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-01-07/rainfall.csv), which is from 1858-01-01 to 2020-01-06.   
+The `temperature` data is divided into two parts, with the cleaned data obtained directly from [GitHub tidytuesday](https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-01-07/temperature.csv), which is from 1910-01-01 to 2019-05-31. And we found the time range of the cleaned `temperature` data cannot match the `fire` data, in order to further analysis of the relationship between the fire and the temperature, we decided to download the new temperature data from the [source website](http://www.bom.gov.au/climate/data/index.shtml??zoom=1&lat=-26.9635&lon=133.4635&layers=B0000TFFFFFFFFFTFFFFFFFFFFFFFFFFTTT&dp=IDC10001&p_nccObsCode=201&p_display_type=dailyDataFile), and cleaned it to obtain the new data from 2019-06-01 to 2020-01-05. Finally, the new data were merge with the Github data to produce a final `temperature` data from 1910-01-01 to 2020-01-05. Also, there are seven weather stations were chosen, based on seven Australian cities such as  Perth, Adelaide, Melbourne, Sydney, Brisbane, Port Lincoln and Canberra.  
 
-```{r temp-data}
-temperature <- tibble(Variable = c("city_name", "date", "temperature", "temp_type", "site_name"),
+The climate data structure is shown as the below tables.
+
+```{r temp-data, message=FALSE}
+temperature_data <- tibble(Variable = c("city_name", "date", "temperature", "temp_type", "site_name"),
                           Class = c( "character",  "double", "double","character", "character"),
                           Description = c("City Name", 
                                           "Date", 
                                           "Temperature in Celsius", 
                                           "Temperature type (min/max daily)", 
                                           "Actual site/weather station")) 
-temperature %>%
-  kable(caption = "Temperature.csv") %>%
+temperature_data %>%
+  kable(caption = "Temperature data") %>%
   kable_styling(bootstrap_options = "striped", 
                 full_width = F, 
                 position = "left")
 ```
 
 
-```{r rainfall-data}
-rainfall <- data.frame(Variable = c("station_code", "city_name","year","month","day","rainfall","period","quality","lat","long","station_name"),
-                          Class = c("character", "character", "double","character","character", "double", "double","character","double","double", "character"),
+```{r rainfall-data, message=FALSE}
+rainfall_data <- data.frame(Variable = c("station_code",
+                              "city_name",
+                              "year",
+                              "month",
+                              "day",
+                              "rainfall",
+                              "period",
+                              "quality",
+                              "lat",
+                              "long",
+                              "station_name"),
+                          Class = c("character", "character", "double",
+                                    "character","character", "double", 
+                                    "double","character","double","double", "character"),
                           Description = c("Station Code",
                                           "City Name", 
                                           "year",
@@ -114,13 +189,12 @@ rainfall <- data.frame(Variable = c("station_code", "city_name","year","month","
                                           "latitude",
                                           "longitude",
                                           "Station Name")) 
-rainfall%>%
-  kable(caption = "rainfall.csv") %>%
+rainfall_data%>%
+  kable(caption = "Rainfall data") %>%
   kable_styling(bootstrap_options = "striped", 
                 full_width = F, 
                 position = "left")
 ```
-
 
 
 # Analysis and findings
