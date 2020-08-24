@@ -25,179 +25,39 @@ knitr::opts_chunk$set(echo = FALSE, messages=FALSE, warning=FALSE, fig.pos = 'H'
 ```{r load-libraries, message=FALSE}
 library(readr)
 library(tidyverse)
-library(kableExtra)
-library(mapview)
 library(here)
 library(knitr)
-library(maps)
 library(lubridate)
-library(plotly)
 library(xts)
 library(dygraphs)
 library(dplyr)
 library(leaflet)
+library(ggplot2)
+library(GGally)
 ```
 
 
 # Introduction and motivation
 
-Bushfires that raged in Australia from September 2019 to early 2020 captured the attention of people around the world, especially the out-of-control bushfires in New South Wales in late December 2019 and early 2020. What caused the bushfires that lasted for four months? Is it closely related to global climate change?   
-The report focuses on the relationship between temperature change, rainfall change and day-night factors on bushfires.  
-
+Bushfires that raged in Australia from September 2019 to early 2020 captured the attention of people worldwide, especially the out-of-control bushfires in New South Wales. However, looking at the Australian bushfires' history data, we can find that Australia suffers from different degrees and quantities of bushfires every year. It is exciting to explore the link between Australian fire history and climate change. What climate conditions caused the frequent occurrence of the bushfires in Australia?    
+This analysis aims to explore three secondary questions for the primary research question:   
+- When and where were the most widespread fires burning?   
+- Was temperature to be blamed for bushfires in Australia?   
+- Was rainfall to be blamed for bushfires in Australia?  
+  
+The rest of the analysis proceeds as follows. Section 2 presents the data description. Section 3 details the findings in data analysis. The limitations of the analysis are presented in Section 4. Finally, Section 5 provides the conclusions of this analysis.   
 
 # Data description
 
 This section mainly introduces the data, data sources and data description.  
 There are three data sets used on this analysis, and the cleaned data is obtained from [GitHub tidytuesday](https://github.com/rfordatascience/tidytuesday/blob/master/data/2020/2020-01-07/readme.md).  
 
-```{r tem-function}
-# clean temperature
-# expand the time range of temperature
-
-name_df <- tribble(
-  ~station_code, ~city_name, ~site_name,
-  "9021", "PERTH", "PERTH AIRPORT",
-  "18192", "PORT", "PORT LINCOLN AWS",
-  "23090", "KENT", "KENT TOWN",
-  "40842", "BRISBANE", "BRISBANE AERO",
-  "66062", "SYDNEY", "SYDNEY (OBSERVATORY HILL)",
-  "70351", "CANBERRA", "CANBERRA AIRPORT",
-  "86338", "MELBOURNE", "MELBOURNE (OLYMPIC PARK)"
-)
-
-read_temp_list <- list.files(here::here("data", "2020-01-07")) %>% 
-  .[str_detect(., "IDCJAC0010|IDCJAC0011")]
-
-read_clean_temp_data <- function(file_name){
-  
-  temp_descrip <- if_else(str_detect(file_name, "IDCJAC0010"), "max", "min")
-  
-  read_csv(here::here("data", "2020-01-07", file_name)) %>% 
-    janitor::clean_names() %>% 
-    rename(station_code = bureau_of_meteorology_station_number,
-           temperature = contains("degree")) %>% 
-    mutate(temp_type = temp_descrip,
-           date = paste0(year,"-",month,"-",day),
-           station_code = as.character(station_code)) %>% 
-    left_join(name_df, by = "station_code") %>% 
-    select(city_name, date, temperature, temp_type, site_name) 
-  
-}
-```
-
-
-```{r tem-expand, message=FALSE}
-# map raw data
-clean_temp_df <- read_temp_list %>% 
-  purrr::map(read_clean_temp_data) %>% 
-  bind_rows() %>% 
-  mutate(date = as.Date(date, "%Y-%m-%d"))%>% 
-  filter(date > "2019-05-31" & date <= "2020-01-05") 
-```
-
-```{r rain-b-function}
-# expand the time range of rainfall for Brisbane
-name_df_b <- tribble(
-  ~station_code, ~city_name, ~lat, ~long, ~station_name,
-  "40140", "Brisbane", -27.48, 153.04, "Brisbane",
-)
-
-read_precip_list <- list.files(here::here("data", "2020-01-07")) %>% 
-  .[str_detect(., "IDCJAC0009")]
-
-read_clean_precip_data_b <- function(file_name){
-  
-  read_csv(here::here("data", "2020-01-07", file_name)) %>% 
-    janitor::clean_names() %>% 
-    select("station_code" = bureau_of_meteorology_station_number,
-           year, month, day,
-           "rainfall"= rainfall_amount_millimetres, 
-           "period" = period_over_which_rainfall_was_measured_days,
-           quality) %>% 
-    mutate(station_code = as.character(station_code),
-           date = paste0(year,"-",month,"-",day)) %>% 
-    left_join(name_df_b, by = "station_code") %>% 
-    select(station_code, city_name, everything())
-}
-```
-
-
-```{r rain-c-function}
-# expand the time range of rainfall for Canberra
-name_df_c <- tribble(
-  ~station_code, ~city_name, ~lat, ~long, ~station_name,
-  "70246", "Canberra", -35.31, 149.2, "Canberra Airport"
-)
-
-read_precip_list <- list.files(here::here("data", "2020-01-07")) %>% 
-  .[str_detect(., "IDCJAC0009")]
-
-read_clean_precip_data_c <- function(file_name){
-  
-  read_csv(here::here("data", "2020-01-07", file_name)) %>% 
-    janitor::clean_names() %>% 
-    select("station_code" = bureau_of_meteorology_station_number,
-           year, month, day,
-           "rainfall"= rainfall_amount_millimetres, 
-           "period" = period_over_which_rainfall_was_measured_days,
-           quality) %>% 
-    mutate(station_code = as.character(station_code),
-           date = paste0(year,"-",month,"-",day)) %>% 
-    left_join(name_df_c, by = "station_code") %>% 
-    select(station_code, city_name, everything())
-}
-```
-
-```{r rain-expand-canberra, message=FALSE}
-# select the time range with Canberra data
-clean_rain_df_canberra <- read_precip_list %>% 
-  purrr::map(read_clean_precip_data_c) %>% 
-  bind_rows()%>%
-  mutate(date = as.Date(date, "%Y-%m-%d"))%>%
-  filter(date <= "2008-09-18") %>%
-  mutate(station_code=recode(station_code,
-                             "70246"= "070351"))%>%
-  select(-date)
-
-```
-
-```{r rain-expand-brisbane, message=FALSE}
-# select the time range with brisbane data
-clean_rain_df_brisbane <- read_precip_list %>% 
-  purrr::map(read_clean_precip_data_b) %>% 
-  bind_rows()%>%
-  mutate(date = as.Date(date, "%Y-%m-%d"))%>%
-  filter(date <= "1999-12-10")%>%
-  mutate(station_code=recode(station_code,
-                             "40140"="040913"))%>%
-  select(-date)
-
-```
-
-```{r read-data, message=FALSE, warning=FALSE}
-# Get the cleaned data from Github
-# the time range for old temperature data is from 1910-01-01 to 2019-05-31
-rainfall_old <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-01-07/rainfall.csv')
-temperature_old <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-01-07/temperature.csv')
-
-# the time range for old fires data is from 2019-12-29 to 2020-01-05, so we re-download the fire data from soure website to get the history data
+```{r read-data}
+# please find the data cleaning code in *data-cleaning code script.R*
 nasa_fire <- readr::read_csv(here::here("data/2020-01-07/fire_archive_M6_147063.csv")) %>% select(-instrument,-type)
-
-# merge two temperature data sets to get final temperature data
-temperature_new <- bind_rows(temperature_old, clean_temp_df) 
-
-# merge three rainfall data sets to get final temperature data
-rainfall_new<-bind_rows(rainfall_old,clean_rain_df_canberra,clean_rain_df_brisbane)
-
-# write new temperature and rainfall data and rainfall data
-write_csv(temperature_new, here::here("data/2020-01-07/","temperature_new.csv"))
-write_csv(rainfall_new, here::here("data", "2020-01-07","rainfall_new.csv"))
-
-# Get the new temperature data from 1910-01-01 to 2020-01-05
 temperature <- read.csv(here::here("data/2020-01-07/temperature_new.csv"))
 rainfall <- read.csv(here::here("data/2020-01-07/rainfall_new.csv"))
 ```
-
 
 ## Australua fire data
 
@@ -287,6 +147,26 @@ rainfall_data%>%
 
 # Analysis and findings
 
-[FILL] Should include at least one plot or numerical summary for each of your questions, that helps the reader arrive at an answer. You should also write paragraphs describing the methods, summaries and findings. 
+## Fires
+
+## The higher the temperature, the more bushfires
+
+Were bushfires more likely to happen with higher temperatures in Australia? In this section, we will explore the relationship between the two in-depth.   
+
+## Rainfall
+
+
+# Limitations of analysis
+
+This section mainly introduces two main limitations of this analysis:   
+- There is no regional division in the fire data. We have indistinctly divided seven states or regions according to Australia's longitude and latitude, which may lead to bias in the analysis results for location.   
+- The temperature and rainfall data include only some major cities, and comparing with the fire data, the sample is too small. Therefore,  the analysis of the link between fires and climate data in Section 3 is not accurate and will cause deviation in results.  
+
+
+# Conclusions
+
+# Acknowlegments
+
+The authors would like to thank all the contributors to the following R package: @tidyverse,  @ggplot2, @readr, @leaflet, @xts, @here, @base, @ggthemes, @dplyr, @dygraphs, @lulbridate, @ggally.
 
 # References
