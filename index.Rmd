@@ -32,7 +32,7 @@ library(knitr)
 library(lubridate)
 library(rgdal)
 library(hrbrthemes)
-library(xts)
+# library(xts)
 library(dygraphs)
 library(dplyr)
 library(leaflet)
@@ -191,13 +191,13 @@ p1 <- data_fire_Year %>%
  
 p1
 ```
-Figure ref\@{figure:when} represent the changing trend of the total number of fires from 2001 to 2020. From this figure, there are three unusual phenomena.  
+Figure \@ref(fig:when) represent the changing trend of the total number of fires from 2001 to 2020. From this figure, there are three unusual phenomena.  
 
 Firstly, Why is the fire trend in 2019 different from other years? we can know that 2019-fire is the largest fire in Australia's temperate forests since European settlement[@nolan2020causes], why it happens? This is because before and during the current fire season, eastern Australia has been suffering from severe drought. In particular, in the six months ending November 30, 2019, most of the northeastern part of New South Wales had the lowest rainfall in history and the temperature was above average.
 
-Secondly, Why is the number of fires from August to November significantly higher than in other months? Is it because of the temperature? August to November is Australia's winter and spring. The average temperature is not particularly high, but fall and winter bring drier weather, making the grass dry and ready to catch fire[@sullivan2012fuel]. Is it also because of rainfall? We drew a figure ref\@{figure:rain} of the average rainfall of different months between 2001 and 2020. It is obvious that September and October are the months with the least rainfall, and August and November are not particularly rainy, so August to November, One of the reasons for the high number of wildfires relative to other months is the low rainfall.
+Secondly, Why is the number of fires from August to November significantly higher than in other months? Is it because of the temperature? August to November is Australia's winter and spring. The average temperature is not particularly high, but fall and winter bring drier weather, making the grass dry and ready to catch fire[@sullivan2012fuel]. Is it also because of rainfall? We drew a figure \@ref(fig:average-rain) of the average rainfall of different months between 2001 and 2020. It is obvious that September and October are the months with the least rainfall, and August and November are not particularly rainy, so August to November, One of the reasons for the high number of wildfires relative to other months is the low rainfall.
 
-```{r rain, fig.cap ="Average rainfall in different months"}
+```{r average-rain, fig.cap ="Average rainfall in different months"}
 rain_agv <- rainfall %>% 
   filter(year> "2001") %>% 
   #mutate(date = as.Date(date)) %>% 
@@ -282,7 +282,7 @@ ggplot(state_fire,aes(x = Year,y = total)) +
         panel.background = element_rect(fill="white"))
  
 ```
-The fig\@{figure:state} clearly shows the largest number of fires almost happen in the Northern Territory and Queensland, one of the reasons is because the Northern Territory and Queensland have more forests. When it comes to the VIC_NSW, Since 2001, the number of fires has remained the same overall, except for 2019, which the number of fires has  When we focus on the year of 2019, we can see that, in some regions, the data in 2019 is indeed slightly higher than the surrounding years, the reason will explain in next part.
+The figure \@ref(fig:state) clearly shows the largest number of fires almost happen in the Northern Territory and Queensland, one of the reasons is because the Northern Territory and Queensland have more forests. When it comes to the VIC_NSW, Since 2001, the number of fires has remained the same overall, except for 2019, which the number of fires has  When we focus on the year of 2019, we can see that, in some regions, the data in 2019 is indeed slightly higher than the surrounding years, the reason will explain in next part.
 
 ## The higher the temperature, the more bushfires
 
@@ -683,6 +683,7 @@ This section mainly introduces two main limitations of this analysis:
 
 # Conclusions
 
+In summary, when analyzing the existence of fires in Australia, we found that between August and November of each year is the most prone month for fires in Australia. The Northern Territory and Western Australia are the most prone to fires. When it comes to climatic conditions that cause the bushfires in Australia to occur frequently, through the analysis of this article, it can be inferred that first, when the temperature is high, more fires usually occur, and vice versa. Second, the decrease in rainfall and the increase in temperature may be the main reasons for the increase in wildfire area. Finally, Australia’s fires affect the global climate and environment, and people all over the world are concerned about it. We hope this article can give some advice on forest fire prevention.
 
 
 # Acknowlegments
