@@ -33,16 +33,24 @@ library(leaflet)
 library(knitr)
 library(lubridate)
 library(maps)
+library(lubridate)
 library(plotly)
+<<<<<<< HEAD
 library(rgdal)
 library(hrbrthemes)
+=======
+library(xts)
+library(dygraphs)
+library(dplyr)
+library(leaflet)
+>>>>>>> 297d881f766388a62493cec0de018e87a4e41f2c
 ```
 
 
 # Introduction and motivation
 
 Bushfires that raged in Australia from September 2019 to early 2020 captured the attention of people around the world, especially the out-of-control bushfires in New South Wales in late December 2019 and early 2020. What caused the bushfires that lasted for four months? Is it closely related to global climate change?   
-The report focuses on the relationship between temperature change, rainfall change and day-night factors on bushfires.
+The report focuses on the relationship between temperature change, rainfall change and day-night factors on bushfires.  
 
 
 # Data description
@@ -95,24 +103,107 @@ clean_temp_df <- read_temp_list %>%
   filter(date > "2019-05-31" & date <= "2020-01-05") 
 ```
 
+```{r rain-b-function}
+# expand the time range of rainfall for Brisbane
+name_df_b <- tribble(
+  ~station_code, ~city_name, ~lat, ~long, ~station_name,
+  "40140", "Brisbane", -27.48, 153.04, "Brisbane",
+)
+
+read_precip_list <- list.files(here::here("data", "2020-01-07")) %>% 
+  .[str_detect(., "IDCJAC0009")]
+
+read_clean_precip_data_b <- function(file_name){
+  
+  read_csv(here::here("data", "2020-01-07", file_name)) %>% 
+    janitor::clean_names() %>% 
+    select("station_code" = bureau_of_meteorology_station_number,
+           year, month, day,
+           "rainfall"= rainfall_amount_millimetres, 
+           "period" = period_over_which_rainfall_was_measured_days,
+           quality) %>% 
+    mutate(station_code = as.character(station_code),
+           date = paste0(year,"-",month,"-",day)) %>% 
+    left_join(name_df_b, by = "station_code") %>% 
+    select(station_code, city_name, everything())
+}
+```
+
+
+```{r rain-c-function}
+# expand the time range of rainfall for Canberra
+name_df_c <- tribble(
+  ~station_code, ~city_name, ~lat, ~long, ~station_name,
+  "70246", "Canberra", -35.31, 149.2, "Canberra Airport"
+)
+
+read_precip_list <- list.files(here::here("data", "2020-01-07")) %>% 
+  .[str_detect(., "IDCJAC0009")]
+
+read_clean_precip_data_c <- function(file_name){
+  
+  read_csv(here::here("data", "2020-01-07", file_name)) %>% 
+    janitor::clean_names() %>% 
+    select("station_code" = bureau_of_meteorology_station_number,
+           year, month, day,
+           "rainfall"= rainfall_amount_millimetres, 
+           "period" = period_over_which_rainfall_was_measured_days,
+           quality) %>% 
+    mutate(station_code = as.character(station_code),
+           date = paste0(year,"-",month,"-",day)) %>% 
+    left_join(name_df_c, by = "station_code") %>% 
+    select(station_code, city_name, everything())
+}
+```
+
+```{r rain-expand-canberra, message=FALSE}
+# select the time range with Canberra data
+clean_rain_df_canberra <- read_precip_list %>% 
+  purrr::map(read_clean_precip_data_c) %>% 
+  bind_rows()%>%
+  mutate(date = as.Date(date, "%Y-%m-%d"))%>%
+  filter(date <= "2008-09-18") %>%
+  mutate(station_code=recode(station_code,
+                             "70246"= "070351"))%>%
+  select(-date)
+
+```
+
+```{r rain-expand-brisbane, message=FALSE}
+# select the time range with brisbane data
+clean_rain_df_brisbane <- read_precip_list %>% 
+  purrr::map(read_clean_precip_data_b) %>% 
+  bind_rows()%>%
+  mutate(date = as.Date(date, "%Y-%m-%d"))%>%
+  filter(date <= "1999-12-10")%>%
+  mutate(station_code=recode(station_code,
+                             "40140"="040913"))%>%
+  select(-date)
+
+```
 
 ```{r read-data, message=FALSE, warning=FALSE}
 # Get the cleaned data from Github
 # the time range for old temperature data is from 1910-01-01 to 2019-05-31
-rainfall <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-01-07/rainfall.csv')
+rainfall_old <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-01-07/rainfall.csv')
 temperature_old <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-01-07/temperature.csv')
 
-# the time range for old fires data is from 2019-12-29 to 2020-01-05, so we re-download the fire data from soure website to get the history data
+# the time range for old fires data is from 2019-12-29 to 2020-01-05, so we re-download the fire data from source website to get the history data
 nasa_fire <- readr::read_csv(here::here("data/2020-01-07/fire_archive_M6_147063.csv")) %>% select(-instrument,-type)
 
 # merge two temperature data sets to get final temperature data
 temperature_new <- bind_rows(temperature_old, clean_temp_df) 
 
-# write temperature data
+# merge three rainfall data sets to get final temperature data
+rainfall_new<-bind_rows(rainfall_old,clean_rain_df_canberra,clean_rain_df_brisbane)
+
+# write new temperature and rainfall data and rainfall data
 write_csv(temperature_new, here::here("data/2020-01-07/","temperature_new.csv"))
+write_csv(rainfall_new, here::here("data", "2020-01-07","rainfall_new.csv"))
 
 # Get the new temperature data from 1910-01-01 to 2020-01-05
 temperature <- read.csv(here::here("data/2020-01-07/temperature_new.csv"))
+rainfall <- read.csv(here::here("data/2020-01-07/rainfall_new.csv"))
 ```
 
 
@@ -149,8 +240,9 @@ fire_data %>%
 
 ## Climate data
 
-For climate data, temperature and rainfall was gathered from the Australian [Bureau of Meterology (BoM)](http://www.bom.gov.au/?ref=logo), of which is used the weather station to measure a variety of aspects of the weather. `Rainfall` data was sourced from six major Australian cities: Perth, Adelaide, Melbourne, Sydney,Brisbane and Canberra, and the cleaned data is obtained from [GitHub tidytuesday](https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-01-07/rainfall.csv), which is from 1858-01-01 to 2020-01-06.   
-The `temperature` data is divided into two parts, with the cleaned data obtained directly from [GitHub tidytuesday](https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-01-07/temperature.csv), which is from 1910-01-01 to 2019-05-31. And we found the time range of the cleaned `temperature` data cannot match the `fire` data, in order to further analysis of the relationship between the fire and the temperature, we decided to download the new temperature data from the [source website](http://www.bom.gov.au/climate/data/index.shtml??zoom=1&lat=-26.9635&lon=133.4635&layers=B0000TFFFFFFFFFTFFFFFFFFFFFFFFFFTTT&dp=IDC10001&p_nccObsCode=201&p_display_type=dailyDataFile), and cleaned it to obtain the new data from 2019-06-01 to 2020-01-05. Finally, the new data were merge with the Github data to produce a final `temperature` data from 1910-01-01 to 2020-01-05. Also, there are seven weather stations were chosen, based on seven Australian cities such as  Perth, Adelaide, Melbourne, Sydney, Brisbane, Port Lincoln and Canberra.  
+For climate data, temperature and rainfall was gathered from the Australian [Bureau of Meterology (BoM)](http://www.bom.gov.au/?ref=logo), of which is used the weather station to measure a variety of aspects of the weather. 
+The `Rainfall` data was sourced from six major Australian cities: Perth, Adelaide, Melbourne, Sydney,Brisbane and Canberra, and the cleaned data is obtained from [GitHub tidytuesday](https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-01-07/rainfall.csv), which is from 1858-01-01 to 2020-01-06, containing more than 230,000 observations.In order to maintain the complete information in six cities, we expand the information for Brisbane and Canberra from the [source website](http://www.bom.gov.au/climate/data) and cleaned them to obtain the data from 1968-01-01 to 2017-12-31 in Canberra and from 1893-01-01 to 1998-12-31 in Brisbane. The new rainfall data is constructed by the old one and supplemental one and then become the final rainfall data set.
+The `temperature` data is divided into two parts, with the cleaned data obtained directly from [GitHub tidytuesday](https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-01-07/temperature.csv), which is from 1910-01-01 to 2019-05-31. And we found the time range of the cleaned `temperature` data cannot match the `fire` data, in order to further analysis of the relationship between the fire and the temperature, we decided to download the new temperature data from the [source website](http://www.bom.gov.au/climate/data/index.shtml??zoom=1&lat=-26.9635&lon=133.4635&layers=B0000TFFFFFFFFFTFFFFFFFFFFFFFFFFTTT&dp=IDC10001&p_nccObsCode=201&p_display_type=dailyDataFile), and cleaned it to obtain the new data from 2019-06-01 to 2020-01-05. Finally, the new data were merge with the Github data to produce a final `temperature` data from 1910-01-01 to 2020-01-05,consisting of more than 530,000 observations. Also, there are seven weather stations were chosen, based on seven Australian cities such as  Perth, Adelaide, Melbourne, Sydney, Brisbane, Port Lincoln and Canberra.  
 
 The climate data structure is shown as the below tables.
 
@@ -168,7 +260,6 @@ temperature_data %>%
                 full_width = F, 
                 position = "left")
 ```
-
 
 ```{r rainfall-data, message=FALSE}
 rainfall_data <- data.frame(Variable = c("station_code",
@@ -202,7 +293,6 @@ rainfall_data%>%
                 full_width = F, 
                 position = "left")
 ```
-
 
 # Analysis and findings
 
