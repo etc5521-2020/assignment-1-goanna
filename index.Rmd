@@ -97,7 +97,7 @@ fire_data %>%
                 position = "left")
 ```
 
-
+ 
 ## Climate data
 
 For climate data, temperature and rainfall was gathered from the Australian [Bureau of Meterology (BoM)](http://www.bom.gov.au/?ref=logo), of which is used the weather station to measure a variety of aspects of the weather. 
