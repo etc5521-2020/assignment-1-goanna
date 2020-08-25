@@ -33,18 +33,19 @@ library(leaflet)
 library(knitr)
 library(lubridate)
 library(maps)
-library(lubridate)
 library(plotly)
-<<<<<<< HEAD
 library(rgdal)
 library(hrbrthemes)
-=======
 library(xts)
 library(dygraphs)
 library(dplyr)
 library(leaflet)
->>>>>>> 297d881f766388a62493cec0de018e87a4e41f2c
+library(sf)
+library(kableExtra)
+library(raster)
+
 ```
+
 
 
 # Introduction and motivation
@@ -431,6 +432,207 @@ The fig\@{figure:state} clearly shows the largest number of fires almost happen 
 
 
 
+
+
+
+
+
+
+# The less rainfall, the more bushfire.
+
+Has the less rainfall affected the more fire in Australia? Or Has the more rainfall influenced the less rainfall? In the past few months,Australia has been suffered a huge fire especially in the winter. Because of the location of Australia, the rainfall in Australia is highly variable which is strongly influenced by global climate system phenomena such as El Niño, La Niña, and the Indian Ocean Dipole. In spite of this large natural variability, the potential long-term trends are evident in some regions,even effecting the local rainfall. In this section, we will explore what is the relationship between rainfall and fire case whether they are positive or negative relationship and what is the reason raised to this issue?
+
+```{r load-data-rain}
+rain<-read.csv(here::here("data/2020-01-07/rainfall_new.csv"))
+nasa_fire<-read.csv(here::here("data/2020-01-07/fire_archive_M6_147063.csv"))
+temp<-read.csv(here::here("data/2020-01-07/temperature_new.csv"))
+
+```
+
+
+## The annual rainfall situation in Australia
+
+As a first step, we analyze the overall situation of annual rainfall. In the rainfall dataset,there are including six cities, of which Sydney has been recorded the rainfall data from 1850 compared with other places and most of place started from around 1970. Therefore, we selected the rainfall data from 1970 for using same scale in the year variable. In order to calculate the annual average rainfall situation, using the six cities which are from six regions in Australia to estimate the overall annual average rainfall. To evaluate the baseline of annual rainfall which is based on the BOM by selecting from 1961 to 1990 to construct the baseline(@bureau2019annual).
+
+The figure \@ref(fig:rain-yearly-plot) shows that how the annual rainfall have changed over time in Australia. An extremely severe drought occurred in the 1994 and this drought was influenced by a strong El Niño weather pattern, the fifth continuous year of drought in parts of Australia(@nicholls2004changing). Although the variability of natural weather in Australia is large,in the recent 20 years,2019 became the driest year. One reason is that the strongest positive Indian Ocean Dipole event (pIOD) has recorded the highest values across 60 years,and due to the frequency and influence of sea-surface temperature changes,the El Nino-Southern Oscillation (ENSO) is neutral throughout the year. Because of the pIOD,it severely curtailed the Walker Circulation and abnormal easterly winds appear in the Indian Ocean and prevailing winds in northwest Australia blow from the continent to the ocean. These winds swept away large amounts of cloud cover over Australia, so the rainfall has been declined dramatically based on that(@hughes2003climate). Also, the annual rainfall in 2010 was the highest in 20 years which is the wettest year since 2000 because of the climate system such as La Niña events.
+
+According to the figure \@ref(fig:rain-diff-annual),the annual rainfall changed cross time compare with the average baseline. The overall situation is that the rainfall difference of most of years are below the average especially for the last 20 years. Even though the annual rainfall difference is above the baseline but it is still above a few in 2010 and 2011. In addition, 2019 is still the lowest rainfall difference in the recent 20 years.
+
+```{r rainfall-wrangling-data}
+rain<-rain%>%
+ drop_na()%>%
+  dplyr::select(station_code,year,rainfall,city_name)%>%
+  filter(station_code %in% c("9151","23001","40913","66062","70351","86232"))%>%
+  filter(year>=1970&year<=2019)
+```
+
+
+```{r rain-year-sum}
+# calculate annual mean temperature
+annual_rain <- rain %>% 
+  dplyr::select(year,rainfall)%>%
+  group_by(year) %>% 
+  summarise(total=sum(rainfall))%>%
+    mutate(time = paste0(year, "-01-01"),
+         time = as.Date(time)) 
+```
+
+```{r r rain-yearly-plot, fig.cap="Annual total rainfall trends from 2001 to 2019"}
+# prepare time series data
+rain_year_dat <- xts(x = annual_rain$total, order.by = annual_rain$time)
+
+# time series plot
+dygraph(rain_year_dat,main="Australia Annual Rainfall") %>%
+  dyOptions(labelsUTC = TRUE, 
+            fillGraph=TRUE, 
+            fillAlpha=0.15, 
+            drawGrid = FALSE, 
+            colors="#EED5D2") %>%
+    dyRangeSelector(dateWindow = c("2000-01-01", "2019-01-01"),
+                  height = 50,
+                  fillColor = "#BFEFFF",) %>%
+  dyCrosshair(direction = "vertical") %>%
+  dyHighlight(highlightCircleSize = 5, 
+              highlightSeriesBackgroundAlpha = 0.1, 
+              hideOnMouseOut = FALSE)  %>%
+  dyRoller(rollPeriod = 1)%>%
+  dySeries("V1", label = "Annual Rainfall (mm)")%>%
+ dyAxis("y", label = "Rainfall / Year")
+```
+
+
+```{r baseline-rain}
+#the annual rainfall baseline selected by the Australian BOM from 1961 to 1990
+rainmean<-rain%>%
+  dplyr::select(year,rainfall)%>%
+  filter(year>=1970&year<=1990)%>%
+  group_by(year)%>%
+ summarise(avg=sum(rainfall))
+
+rainmean<-rainmean%>%
+  mutate(baseline=sum(avg)/120)
+  
+```
+
+
+```{r rainfall-diff, message=FALSE}
+#277.6 is the annual rainfall baseline selected by the Australian BOM from 1961 to 1990
+rain_diff <- rain %>%
+   dplyr::select(year,rainfall)%>%
+  group_by(year) %>% 
+  summarise(avg = sum(rainfall)/6)%>%
+  mutate(diff = (avg - rainmean$baseline ),
+         diff = round(diff,2))
+```
+
+```{r rain-diff-annual,fig.cap="Annual rainfall difference"}
+rain_diff$ismax <- with(rain_diff, ave(year, FUN=function(x) x==max(x)))
+
+ggplot(rain_diff,aes(x=year, y=diff,fill=as.factor(ismax))) + 
+  geom_bar(stat = "identity")+
+  scale_fill_manual(breaks=c("0","1"), values=c("grey","red"), guide="none")+
+   geom_hline(yintercept = 0, color = "#9C9C9C")+
+  scale_y_continuous(breaks = seq(-400,400,100))+
+  annotate(geom="text", 
+           x=1985, y=250, 
+           label="Annual rainfall difference \n with the 1961–1990 average",
+           color="grey", 
+           size = 3)+
+  annotate(geom="text", 
+           x=1975, y=350, 
+           label="above than millimeters(mm)",
+           color="grey", 
+           size = 3)+
+  annotate(geom = "text",
+           x=2019,y=-300,
+           label="2019",
+           size = 3)+
+  annotate(geom = "text",
+           x=1994,y=-380,
+           label="1994",
+           size = 3)+
+   annotate(geom = "text",
+           x=2000,y=-220,
+           label="2000",
+           size = 3)+
+  annotate(geom = "text",
+           x=2010,y=100,
+           label="2010",
+           size = 3)+
+  ylab("rainfall")+
+  ggtitle("The annual rainfall difference in Australia from 1970 to 2019")+
+  theme(axis.title.x=element_blank(),
+                  axis.title.y=element_blank(),
+                  axis.ticks=element_blank(),
+                  axis.text.x = element_blank(),
+                  axis.text.y = element_text(color = "grey", 
+                                             face = "bold"),
+                  plot.title = element_text(face = "bold"),
+                  plot.background = element_rect(fill="white"),
+                  panel.background = element_rect(fill="white"))
+
+```
+
+Based on figure \@ref(fig:fire), the number of fire in Australia has been fluctuated but the average of fire more than 250000 cases in each year in the last 20 years. Obviously,the number of total fire is the lowest one in 2010. That may be the annual rainfall is the highest in 2010 as well which can be contributed to relief dry conditions and reducing the fuel load leading. Excepting for 2012 which the fire maybe raised by dry thunderstorm, The another highest point is in 2002. In this case, by looking at the annual rainfall and rainfall difference, the overall situation of these two attributes are lower which are the third from bottom.
+
+To explore the further relationship between rainfall,temperature and fire, the scatter-plot will be displayed as below Figure \@ref(fig:correlation). Based on the figure, it seems that the rainfall and fire has negative correlation,suggesting that the more rainfall and the less fire. On the contrary, the higher temperature and the more fire although the correlation between these two variable is slightly small, while the relationship between them still can be evaluated. Moreover, the rainfall will be declined when the temperature would get higher.Temperatures will impact the rate of evaporation, with higher temperatures leading to faster soil moisture loss.(@hausfather2018explainer) 
+
+In conclusion, the main weather character of bushfire is hot and dry(@van2020attribution). The graph of annual rainfall and temperature show that the hottest and driest year is 2019 which also has the biggest forest fire in Australia as well. Therefore,as the combination of extremely dry and extremely hot conditions adds up to more powerful fires, indicating that declines in rainfall and increases in temperature have likely been a primary driver of increases in wildfire area burned.
+  
+
+```{r rainfall-annual-data}
+rain_annual<-rain%>%
+  drop_na()%>%
+  filter(year>=2001&year<=2019) %>% 
+  #mutate(date = paste0(year,"-",month,"-",day)) %>% 
+  group_by(year) %>% 
+  summarise(rainfall = sum(rainfall))%>%
+  mutate(year=as.character(year))
+```
+
+```{r fire-annual-total}
+fire_annual <- nasa_fire %>% 
+  filter(acq_date >= "2001-01-01" & acq_date <= "2019-12-31") %>% 
+  mutate(acq_date = as.POSIXct(acq_date)) %>% 
+  mutate(year =year(acq_date),Month = month(acq_date),Day=day(acq_date)) %>% 
+  mutate(year = as.character(year)) %>% 
+  group_by(year)%>% 
+  summarise(fire = n()) 
+```
+
+
+```{r temp-annual-data}
+temp_annual <- temp %>% 
+  mutate(year = year(date)) %>%
+  mutate(year=as.character(year))%>%
+  filter(temp_type == "max") %>% 
+  filter(year>=2001&year <= 2019) %>% 
+  group_by(year) %>% 
+  summarise(temperature = mean(temperature,na.rm = TRUE))
+ # mutate(time = paste0(year, "-01-01"),
+  #       time = as.Date(time)) 
+```
+
+
+```{r all-data}
+all_data <- fire_annual %>% 
+  left_join(rain_annual, by = "year") %>% 
+  left_join(temp_annual, by = "year") %>%
+  mutate(log_fire = log1p(fire),
+         log_rainfall=log(rainfall))
+```
+
+```{r lm}
+fit <- lm (log_fire ~ temperature+log(rainfall),data =all_data)
+```
+
+```{r correlation,fig.cap="The correlation between rainfall,temperature and fire"}
+GGally::ggpairs(all_data,c(2:4))+
+  theme(legend.position = "none", 
+        panel.grid.major = element_blank(), 
+        axis.ticks = element_blank(), 
+        panel.border = element_rect(linetype = "dashed", colour = "blue", fill = NA))
+```
 
 
 
