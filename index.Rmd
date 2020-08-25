@@ -25,15 +25,11 @@ knitr::opts_chunk$set(echo = FALSE, messages=FALSE, warning=FALSE, fig.pos = 'H'
 ```{r load-libraries, message=FALSE}
 library(readr)
 library(tidyverse)
-library(kableExtra)
-library(mapview)
 library(here)
 library(viridis)
 library(leaflet)
 library(knitr)
 library(lubridate)
-library(maps)
-library(plotly)
 library(rgdal)
 library(hrbrthemes)
 library(xts)
@@ -43,174 +39,37 @@ library(leaflet)
 library(sf)
 library(kableExtra)
 library(raster)
-
+library(ggplot2)
+library(GGally)
 ```
 
 
 
 # Introduction and motivation
 
-Bushfires that raged in Australia from September 2019 to early 2020 captured the attention of people around the world, especially the out-of-control bushfires in New South Wales in late December 2019 and early 2020. What caused the bushfires that lasted for four months? Is it closely related to global climate change?   
-The report focuses on the relationship between temperature change, rainfall change and day-night factors on bushfires.  
-
+Bushfires that raged in Australia from September 2019 to early 2020 captured the attention of people worldwide, especially the out-of-control bushfires in New South Wales. However, looking at the Australian bushfires' history data, we can find that Australia suffers from different degrees and quantities of bushfires every year. It is exciting to explore the link between Australian fire history and climate change. What climate conditions caused the frequent occurrence of the bushfires in Australia?    
+This analysis aims to explore three secondary questions for the primary research question:   
+- When and where were the most widespread fires burning?   
+- Was temperature to be blamed for bushfires in Australia?   
+- Was rainfall to be blamed for bushfires in Australia?  
+  
+The rest of the analysis proceeds as follows. Section 2 presents the data description. Section 3 details the findings in data analysis. The limitations of the analysis are presented in Section 4. Finally, Section 5 provides the conclusions of this analysis.   
 
 # Data description
 
 This section mainly introduces the data, data sources and data description.  
 There are three data sets used on this analysis, and the cleaned data is obtained from [GitHub tidytuesday](https://github.com/rfordatascience/tidytuesday/blob/master/data/2020/2020-01-07/readme.md).  
 
-```{r tem-function}
-# clean temperature
-# expand the time range of temperature
-
-name_df <- tribble(
-  ~station_code, ~city_name, ~site_name,
-  "9021", "PERTH", "PERTH AIRPORT",
-  "18192", "PORT", "PORT LINCOLN AWS",
-  "23090", "KENT", "KENT TOWN",
-  "40842", "BRISBANE", "BRISBANE AERO",
-  "66062", "SYDNEY", "SYDNEY (OBSERVATORY HILL)",
-  "70351", "CANBERRA", "CANBERRA AIRPORT",
-  "86338", "MELBOURNE", "MELBOURNE (OLYMPIC PARK)"
-)
-
-read_temp_list <- list.files(here::here("data", "2020-01-07")) %>% 
-  .[str_detect(., "IDCJAC0010|IDCJAC0011")]
-
-read_clean_temp_data <- function(file_name){
-  
-  temp_descrip <- if_else(str_detect(file_name, "IDCJAC0010"), "max", "min")
-  
-  read_csv(here::here("data", "2020-01-07", file_name)) %>% 
-    janitor::clean_names() %>% 
-    rename(station_code = bureau_of_meteorology_station_number,
-           temperature = contains("degree")) %>% 
-    mutate(temp_type = temp_descrip,
-           date = paste0(year,"-",month,"-",day),
-           station_code = as.character(station_code)) %>% 
-    left_join(name_df, by = "station_code") %>% 
-    select(city_name, date, temperature, temp_type, site_name) 
-  
-}
-```
-
-
-```{r tem-expand, message=FALSE}
-# map raw data
-clean_temp_df <- read_temp_list %>% 
-  purrr::map(read_clean_temp_data) %>% 
-  bind_rows() %>% 
-  mutate(date = as.Date(date, "%Y-%m-%d"))%>% 
-  filter(date > "2019-05-31" & date <= "2020-01-05") 
-```
-
-```{r rain-b-function}
-# expand the time range of rainfall for Brisbane
-name_df_b <- tribble(
-  ~station_code, ~city_name, ~lat, ~long, ~station_name,
-  "40140", "Brisbane", -27.48, 153.04, "Brisbane",
-)
-
-read_precip_list <- list.files(here::here("data", "2020-01-07")) %>% 
-  .[str_detect(., "IDCJAC0009")]
-
-read_clean_precip_data_b <- function(file_name){
-  
-  read_csv(here::here("data", "2020-01-07", file_name)) %>% 
-    janitor::clean_names() %>% 
-    select("station_code" = bureau_of_meteorology_station_number,
-           year, month, day,
-           "rainfall"= rainfall_amount_millimetres, 
-           "period" = period_over_which_rainfall_was_measured_days,
-           quality) %>% 
-    mutate(station_code = as.character(station_code),
-           date = paste0(year,"-",month,"-",day)) %>% 
-    left_join(name_df_b, by = "station_code") %>% 
-    select(station_code, city_name, everything())
-}
-```
-
-
-```{r rain-c-function}
-# expand the time range of rainfall for Canberra
-name_df_c <- tribble(
-  ~station_code, ~city_name, ~lat, ~long, ~station_name,
-  "70246", "Canberra", -35.31, 149.2, "Canberra Airport"
-)
-
-read_precip_list <- list.files(here::here("data", "2020-01-07")) %>% 
-  .[str_detect(., "IDCJAC0009")]
-
-read_clean_precip_data_c <- function(file_name){
-  
-  read_csv(here::here("data", "2020-01-07", file_name)) %>% 
-    janitor::clean_names() %>% 
-    select("station_code" = bureau_of_meteorology_station_number,
-           year, month, day,
-           "rainfall"= rainfall_amount_millimetres, 
-           "period" = period_over_which_rainfall_was_measured_days,
-           quality) %>% 
-    mutate(station_code = as.character(station_code),
-           date = paste0(year,"-",month,"-",day)) %>% 
-    left_join(name_df_c, by = "station_code") %>% 
-    select(station_code, city_name, everything())
-}
-```
-
-```{r rain-expand-canberra, message=FALSE}
-# select the time range with Canberra data
-clean_rain_df_canberra <- read_precip_list %>% 
-  purrr::map(read_clean_precip_data_c) %>% 
-  bind_rows()%>%
-  mutate(date = as.Date(date, "%Y-%m-%d"))%>%
-  filter(date <= "2008-09-18") %>%
-  mutate(station_code=recode(station_code,
-                             "70246"= "070351"))%>%
-  select(-date)
-
-```
-
-```{r rain-expand-brisbane, message=FALSE}
-# select the time range with brisbane data
-clean_rain_df_brisbane <- read_precip_list %>% 
-  purrr::map(read_clean_precip_data_b) %>% 
-  bind_rows()%>%
-  mutate(date = as.Date(date, "%Y-%m-%d"))%>%
-  filter(date <= "1999-12-10")%>%
-  mutate(station_code=recode(station_code,
-                             "40140"="040913"))%>%
-  select(-date)
-
-```
-
-```{r read-data, message=FALSE, warning=FALSE}
-# Get the cleaned data from Github
-# the time range for old temperature data is from 1910-01-01 to 2019-05-31
-rainfall_old <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-01-07/rainfall.csv')
-temperature_old <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-01-07/temperature.csv')
-
-# the time range for old fires data is from 2019-12-29 to 2020-01-05, so we re-download the fire data from source website to get the history data
+```{r read-data}
+# please find the data cleaning code in *data-cleaning code script.R*
 nasa_fire <- readr::read_csv(here::here("data/2020-01-07/fire_archive_M6_147063.csv")) %>% select(-instrument,-type)
-
-# merge two temperature data sets to get final temperature data
-temperature_new <- bind_rows(temperature_old, clean_temp_df) 
-
-# merge three rainfall data sets to get final temperature data
-rainfall_new<-bind_rows(rainfall_old,clean_rain_df_canberra,clean_rain_df_brisbane)
-
-# write new temperature and rainfall data and rainfall data
-write_csv(temperature_new, here::here("data/2020-01-07/","temperature_new.csv"))
-write_csv(rainfall_new, here::here("data", "2020-01-07","rainfall_new.csv"))
-
-# Get the new temperature data from 1910-01-01 to 2020-01-05
 temperature <- read.csv(here::here("data/2020-01-07/temperature_new.csv"))
 rainfall <- read.csv(here::here("data/2020-01-07/rainfall_new.csv"))
 ```
 
-
 ## Australua fire data
 
-The `fire` data source is from [NASA](https://firms.modaps.eosdis.nasa.gov/download/)[@nasa] "Active Fires Dataset" via the MODIS fire product collection. MODIS active fire product is detected the fire data in every 5 minutes and collected through each tile with horizontal and vertical coordinate. The data contains the fire information of Australia with `r nrow(nasa_fire)` observations from 2000-11-01 to 2020-01-05. The variables information included in the data are as the following table:
+The `fire` data source is from [NASA](https://firms.modaps.eosdis.nasa.gov/download/)[@nasa] "Active Fires Dataset" via the MODIS fire product collection. MODIS active fire product is detected the fire data in every 5 minutes and collected through each tile with horizontal and vertical coordinate. The data contains the fire information of Australia with `r nrow(nasa_fire)` observations from 2000-11-01 to 2020-01-05. The variables information included in the data are as the following table:  
 
 ```{r fire-data, message=FALSE}
 fire_data <- data.frame(
@@ -297,11 +156,9 @@ rainfall_data%>%
 
 # Analysis and findings
 
-[FILL] Should include at least one plot or numerical summary for each of your questions, that helps the reader arrive at an answer. You should also write paragraphs describing the methods, summaries and findings.
-
 ## When were the most fires burning ?
 
-In this part, we will focus on the relationship between fire number and the time, We analyzed the fire data of the past ten years and got the total number of living in 12 months of each year, the graph shows below.
+In this part, we will focus on the relationship between fire number and the time, We analyzed the fire data of the past ten years and got the total number of living in 12 months of each year, the graph shows below.  
 
 ```{r when,fig.cap="The number of Australia fire in 12 month between 2001 and 2020"}
 
@@ -334,10 +191,9 @@ p1 <- data_fire_Year %>%
  
 p1
 ```
-Figure ref\@{figure:when} represent the changing trend of the total number of fires from 2001 to 2020. From this figure, there are three unusual phenomena.
+Figure ref\@{figure:when} represent the changing trend of the total number of fires from 2001 to 2020. From this figure, there are three unusual phenomena.  
 
 Firstly, Why is the fire trend in 2019 different from other years? we can know that 2019-fire is the largest fire in Australia's temperate forests since European settlement[@nolan2020causes], why it happens? This is because before and during the current fire season, eastern Australia has been suffering from severe drought. In particular, in the six months ending November 30, 2019, most of the northeastern part of New South Wales had the lowest rainfall in history and the temperature was above average.
-
 
 Secondly, Why is the number of fires from August to November significantly higher than in other months? Is it because of the temperature? August to November is Australia's winter and spring. The average temperature is not particularly high, but fall and winter bring drier weather, making the grass dry and ready to catch fire[@sullivan2012fuel]. Is it also because of rainfall? We drew a figure ref\@{figure:rain} of the average rainfall of different months between 2001 and 2020. It is obvious that September and October are the months with the least rainfall, and August and November are not particularly rainy, so August to November, One of the reasons for the high number of wildfires relative to other months is the low rainfall.
 
@@ -428,14 +284,198 @@ ggplot(state_fire,aes(x = Year,y = total)) +
 ```
 The fig\@{figure:state} clearly shows the largest number of fires almost happen in the Northern Territory and Queensland, one of the reasons is because the Northern Territory and Queensland have more forests. When it comes to the VIC_NSW, Since 2001, the number of fires has remained the same overall, except for 2019, which the number of fires has  When we focus on the year of 2019, we can see that, in some regions, the data in 2019 is indeed slightly higher than the surrounding years, the reason will explain in next part.
 
+## The higher the temperature, the more bushfires
+
+Were bushfires more likely to happen with higher temperatures in Australia? In this section, we will explore the relationship between the two in-depth.   
+
+```{r temp}
+temperature <- temperature %>% 
+  mutate(year = year(date)) 
+```
+
+```{r temp-yearly}
+# calculate annual mean temperature
+temp_year <- temperature %>% 
+  filter(temp_type == "max") %>% 
+  filter(year <= 2019) %>% 
+  group_by(year) %>% 
+  summarise(avg = mean(temperature,na.rm = TRUE)) %>% 
+  mutate(time = paste0(year, "-01-01"),
+         time = as.Date(time)) 
+```
+
+```{r temp-yearly-plot,message=FALSE, warning=FALSE, fig.cap="Annual average temperature trends from 1910 to 2019, calculated by daily maximum temperature"}
+# prepare time series data
+temp_year_dat <- xts(x = temp_year$avg, order.by = temp_year$time)
+
+# time series plot
+dygraph(temp_year_dat) %>%
+  dyOptions(labelsUTC = TRUE, 
+            fillGraph=TRUE, 
+            fillAlpha=0.15, 
+            drawGrid = FALSE, 
+            colors="#EED5D2") %>%
+  dyRangeSelector(dateWindow = c("2000-01-01", "2019-01-01"),
+                  height = 50,
+                  fillColor = "#BFEFFF",) %>%
+  dyCrosshair(direction = "vertical") %>%
+  dyHighlight(highlightCircleSize = 5, 
+              highlightSeriesBackgroundAlpha = 0.1, 
+              hideOnMouseOut = FALSE)  %>%
+  dyRoller(rollPeriod = 1)
+
+```
 
 
+As a first step, we calculated the annual average temperature from 1910 to 2019 and drew a time series plot. From the Figure \@ref(fig:temp-yearly-plot), it can be seen that the average temperature in 2019 is significantly higher than in other years. A strong positive Indian Ocean Dipole (IOD) phenomenon was the culprit[@harris2019understanding], and contributed to very high temperature and low rainfall across Australia[@bureau2019annual], which began in May 2019 and lasted until the end of the year.   
 
+```{r plot1, fig.cap= 'Indian Ocean Dipole: positive phase. Source from Australian BOM.', out.width = '60%', out.height='60%'}
+knitr::include_graphics("images/iod-positive.png")
+```
+  
+However, how big is the difference between the temperature in 2019 and other years? Has it reached dangerous standards?   
+Therefore, we calculated the annual average temperature from 1961 to 1990, which is the baseline used by the Australian BOM to compare annual average temperature difference. From the Figure \@ref(fig:temp-diff), we can find that from 1910 to mid-1950, the annual average temperature of almost all years was lower than the baseline, but since the late 1950s, it was higher than the baseline. Although there have been sporadic years of unusual trends, it does not affect the overall trend. Also, it is worth noting that 2019 is significantly higher than in other years, with a difference of above 1.5 degrees Celsius. As BOM sates, 2019 was Australia's warmest year on record, surpassing the previous record of +1.35°C in 2013[@bureau2019annual].  
+Since the 1970s, the rising average annual temperature has been a warning that Global warming is a growing problem. Moreover, Global warming brings many catastrophic disasters, among which bushfires are one of them. As the global temperature rises more, humans and nature will encounter more disasters. The average temperature in Australia has risen by 1 degree Celsius since the industrial period, which is one of the reasons why bushfires were so frequently occurred in Australia and raged in 2019[@council2019not].   
 
+```{r baseline}
+# mean temperature from 1961 to 1990, follow the baseline selected by the Australian BOM
+meanTemp <- temperature %>% 
+  filter(temp_type == "max") %>% 
+  filter(year >= 1961 & year <= 1990) %>% 
+  summarise(avg = mean(temperature, na.rm = TRUE))
+```
 
+```{r themes}
+# combine themes
+themes_p <- theme(axis.title.x=element_blank(),
+                  axis.title.y=element_blank(),
+                  axis.ticks=element_blank(),
+                  axis.text.x = element_blank(),
+                  axis.text.y = element_text(color = "grey", 
+                                             face = "bold"),
+                  plot.title = element_text(face = "bold"),
+                  plot.background = element_rect(fill="white"),
+                  panel.background = element_rect(fill="white"))
+```
 
+```{r temp-diff, message=FALSE,warning=FALSE, fig.cap="The plot for the difference between the average temperature of 1961-1990(as baseline) and the annual average temperature for each year from 1910 to 2019, calculated by daily maximum temperature"}
+# temperature difference data
+temp_diff <- temperature %>%
+  filter(temp_type == "max") %>% 
+  filter(year <= 2019) %>% 
+  group_by(year) %>% 
+  summarise(avg = mean(temperature,na.rm = TRUE)) %>% 
+  mutate(diff = (avg - meanTemp$avg),
+         diff = round(diff,2))
 
+temp_diff$ismax <- with(temp_diff, ave(diff, FUN=function(x) x==max(x)))
 
+# plot difference
+temp_diff %>% 
+  ggplot(aes(year, diff, fill=as.factor(ismax))) + 
+  geom_bar(stat="identity") +
+  scale_y_continuous(breaks = seq(-1.5,1.5,0.5))+
+  scale_fill_manual(breaks=c("0","1"), 
+                    values=c("#C7C7C7","#F08080"), 
+                    guide="none")+
+  geom_hline(yintercept = 0, color = "#9C9C9C")+
+  annotate(geom="text", 
+           x=1930, y=0.8, 
+           label="Annual temperature's difference \n with the 1961–1990 average",
+           color="grey", 
+           size = 3)+
+  annotate(geom="text", 
+           x=1917, y=1.5, 
+           label="above than average(°C)",
+           color="grey", 
+           size = 3)+
+  annotate(geom = "text",
+           x=2019,y=1.8,
+           label="2019",
+           size = 3)+
+  annotate(geom = "text",
+           x=1917,y=-1.9,
+           label="1917",
+           size = 3)+
+  annotate(geom = "text",
+           x=1972,y=0.5,
+           label="1970",
+           size = 3)+
+  ggtitle("2019 was Australia's hottest year")+
+  themes_p
+
+```
+
+```{r fire-year-sum}
+# calculate annual mean temperature
+sum_fire <- nasa_fire %>% 
+  mutate(year = year(acq_date)) %>% 
+  filter(year > 2000 & year <= 2019) %>% 
+  group_by(year) %>% 
+  summarise(n = n()) %>% 
+  mutate(time = paste0(year, "-01-01"),
+         time = as.Date(time)) 
+```
+
+```{r fire-yearly-plot, fig.cap="Annual total fires trends from 2001 to 2019"}
+# prepare time series data
+fire_year_dat <- xts(x = sum_fire$n, order.by = sum_fire$time)
+
+# time series plot
+dygraph(fire_year_dat) %>%
+  dyOptions(labelsUTC = TRUE, 
+            fillGraph=TRUE, 
+            fillAlpha=0.15, 
+            drawGrid = FALSE, 
+            colors="#EED5D2") %>%
+  dyRangeSelector(dateWindow = c("2000-01-01", "2019-01-01"),
+                  height = 50,
+                  fillColor = "#BFEFFF",) %>%
+  dyCrosshair(direction = "vertical") %>%
+  dyHighlight(highlightCircleSize = 5, 
+              highlightSeriesBackgroundAlpha = 0.1, 
+              hideOnMouseOut = FALSE)  %>%
+  dyRoller(rollPeriod = 1)
+```
+
+Figure \@ref(fig:fire-yearly-plot) shows the annual trend of total number of fires in Australia from 2001 to 2019. Compared with Figure \@ref(fig:temp-yearly-plot), the annual total fire occurrences trend fluctuates mostly in a consistent pattern. When the temperature is high, there are generally more fires, and vice versa. However, there are an unexpected fact that the fires occurrence in 2012 ranked first with 474,964, but the annual average temperature in 2012 was relatively low with 22.57°C. We found that the raged bushfires in 2012 that were caused by lightning at the beginning, and lightning was predominantly responsible for the bushfires[@dowdy2012characteristics].   
+  
+From the above analysis, we can further clarify that the high-temperature weather in 2019 is closely related to bushfires, and high temperature makes forest fuels more susceptible to cause bushfires[@oldenborgh2020attribution].   
+
+```{r temp-site, message=FALSE}
+temperature %>% 
+  filter(date >= "2019-09-01") %>%
+  group_by(city_name) %>% 
+  summarise(avg = mean(temperature, na.rm = TRUE)) %>% 
+  arrange(-avg) %>% 
+  kable(caption = "Average annual temperature for each city in 2019") %>% 
+  kable_styling(bootstrap_options = 
+                  c("striped", "condensed"), 
+                  full_width = F, 
+                  position = "center")
+```
+
+```{r fire-map, message = FALSE, fig.cap="The distribution point for Australian bushfire from 2019-12-29 to 2020-01-05(the darker the color, the more serious the fire)"}
+subset <- nasa_fire %>% 
+  filter(acq_date == "2019-12-01")
+
+pal <- colorNumeric(palette = "YlOrRd", domain = subset$brightness)
+
+leaflet(data = subset) %>%
+   #setView(lng = 153.05, lat = -27.45, zoom = 12) %>% 
+    addTiles() %>%
+    addCircleMarkers(lat = ~latitude, 
+                     lng = ~longitude, 
+                     popup = ~brightness, 
+                     radius=4,
+                     color = ~pal(brightness), 
+                     stroke = FALSE, 
+                     fillOpacity = 0.6) %>%
+    addLegend(position = "bottomleft", pal = pal, values = ~brightness)
+
+```
+
+In this part of the analysis, we concluded that as global warming becomes more serious and temperatures rise, bushfires will become more frequent.   
 
 
 # The less rainfall, the more bushfire.
@@ -477,7 +517,7 @@ annual_rain <- rain %>%
          time = as.Date(time)) 
 ```
 
-```{r r rain-yearly-plot, fig.cap="Annual total rainfall trends from 2001 to 2019"}
+```{r rain-yearly-plot, fig.cap="Annual total rainfall trends from 2001 to 2019"}
 # prepare time series data
 rain_year_dat <- xts(x = annual_rain$total, order.by = annual_rain$time)
 
@@ -499,7 +539,6 @@ dygraph(rain_year_dat,main="Australia Annual Rainfall") %>%
   dySeries("V1", label = "Annual Rainfall (mm)")%>%
  dyAxis("y", label = "Rainfall / Year")
 ```
-
 
 ```{r baseline-rain}
 #the annual rainfall baseline selected by the Australian BOM from 1961 to 1990
@@ -635,14 +674,19 @@ GGally::ggpairs(all_data,c(2:4))+
 ```
 
 
+# Limitations of analysis
+
+This section mainly introduces two main limitations of this analysis:   
+- There is no regional division in the fire data. We have indistinctly divided seven states or regions according to Australia's longitude and latitude, which may lead to bias in the analysis results for location.   
+- The temperature and rainfall data include only some major cities, and comparing with the fire data, the sample is too small. Therefore,  the analysis of the link between fires and climate data in Section 3 is not accurate and will cause deviation in results.  
+
+
+# Conclusions
 
 
 
+# Acknowlegments
 
+The authors would like to thank all the contributors to the following R package: @tidyverse,  @ggplot2, @readr, @leaflet, @xts, @here, @base, @ggthemes, @dplyr, @dygraphs, @lulbridate, @ggally.
 
-
-
-
-
-
-
+# References
