@@ -28,9 +28,14 @@ library(tidyverse)
 library(kableExtra)
 library(mapview)
 library(here)
+library(viridis)
+library(leaflet)
 library(knitr)
+library(lubridate)
 library(maps)
 library(plotly)
+library(rgdal)
+library(hrbrthemes)
 ```
 
 
@@ -201,6 +206,151 @@ rainfall_data%>%
 
 # Analysis and findings
 
-[FILL] Should include at least one plot or numerical summary for each of your questions, that helps the reader arrive at an answer. You should also write paragraphs describing the methods, summaries and findings. 
+[FILL] Should include at least one plot or numerical summary for each of your questions, that helps the reader arrive at an answer. You should also write paragraphs describing the methods, summaries and findings.
 
-# References
+## When were the most fires burning ?
+
+In this part, we will focus on the relationship between fire number and the time, We analyzed the fire data of the past ten years and got the total number of living in 12 months of each year, the graph shows below.
+
+```{r when,fig.cap="The number of Australia fire in 12 month between 2001 and 2020"}
+
+data_fire_Year <- nasa_fire %>% 
+  
+  mutate(acq_date = as.POSIXlt(acq_date)) %>% 
+  mutate(Year =year(acq_date),Month = month(acq_date)) %>% 
+  mutate(Year = factor(Year)) %>% 
+  group_by(Year,Month)%>% 
+  summarise(total = n()) 
+
+p1 <- data_fire_Year %>% 
+  mutate( highlight=ifelse(Year=="2019", "2019", "Other")) %>% 
+  ggplot( aes(x=Month, y=total, group=Year, color=highlight, size=highlight)) +
+  scale_x_continuous(breaks = seq(1, 12, by = 1))+
+  geom_line()+
+  geom_label( x=4.5, y=2000, label="Other years,2001 to 2018", size=2, color="#69b3a2")+
+  geom_label( x=11.5, y=90000, label="2019", size=3, color="#69b3a2")+
+  geom_label( x=8.5, y=115000, label="2011", size=3, color="#69b3a2")+
+  scale_color_manual(values = c("#69b3a2", "grey")) +
+    scale_size_manual(values=c(1.5,0.2)) +
+    theme(legend.position="none") +
+    # ggtitle("The number of Australia fire in 12 month between 2001 and 2020") +
+  theme(
+                  axis.text.y = element_text(color = "grey", 
+                                             face = "bold"),
+                  plot.title = element_text(face = "bold"),
+                  plot.background = element_rect(fill="white"),
+                  panel.background = element_rect(fill="white"))
+ 
+p1
+```
+Figure ref\@{figure:when} represent the changing trend of the total number of fires from 2001 to 2020. From this figure, there are three unusual phenomena.
+
+Firstly, Why is the fire trend in 2019 different from other years? we can know that 2019-fire is the largest fire in Australia's temperate forests since European settlement[@nolan2020causes], why it happens? This is because before and during the current fire season, eastern Australia has been suffering from severe drought. In particular, in the six months ending November 30, 2019, most of the northeastern part of New South Wales had the lowest rainfall in history and the temperature was above average.
+
+
+Secondly, Why is the number of fires from August to November significantly higher than in other months? Is it because of the temperature? August to November is Australia's winter and spring. The average temperature is not particularly high, but fall and winter bring drier weather, making the grass dry and ready to catch fire[@sullivan2012fuel]. Is it also because of rainfall? We drew a figure ref\@{figure:rain} of the average rainfall of different months between 2001 and 2020. It is obvious that September and October are the months with the least rainfall, and August and November are not particularly rainy, so August to November, One of the reasons for the high number of wildfires relative to other months is the low rainfall.
+
+```{r rain, fig.cap ="Average rainfall in different months"}
+rain_agv <- rainfall %>% 
+  filter(year> "2001") %>% 
+  #mutate(date = as.Date(date)) %>% 
+  #mutate(Month = month(date)) %>% 
+  group_by (month) %>% 
+  #filter(Month ==c(8:11)) %>% 
+  summarise(mean_rain= mean(rainfall,na.rm=TRUE)) %>% 
+  arrange(mean_rain)
+  
+  rain_agv %>%
+ # filter(!is.na(Value)) %>%
+  arrange(mean_rain) %>%
+  mutate(month=factor(month, month)) %>%
+  ggplot( aes(x=month, y=mean_rain) ) +
+    geom_segment( aes(x=month ,xend= month, y=0, yend=mean_rain), color="grey") +
+    geom_point(size=3, color="#69b3a2") +
+    coord_flip() +
+    #theme_ft_rc() +
+    theme_ipsum() +
+    theme(
+      panel.grid.minor.y = element_blank(),
+      panel.grid.major.y = element_blank(),
+      legend.position="none"
+    ) +
+    xlab("Month")
+```
+
+Lastly, Why did September with the highest number of fires occur in 2011? This is because the fire swept through the Barkley Plateau and the Victoria River area, destroying large areas of grazing land. According to the report, the fire front is estimated to be 50 kilometers (31 miles); the Barkley fire caused 7,000 square kilometers (2,700 square miles) to be burned in the country, and the Victoria River area lost 2,000 square kilometers (770 square miles). At the same time, 30 grass fires broke out in Kimberley. Several other fires burned in Kimberley, causing the loss of 60,000 hectares (150,000 acres) of grassland. (source: https://en.wikipedia.org/wiki/2011%E2%80%9312_Australian_bushfire_season#cite_note-3)
+
+
+
+## What locations the most widespread fires burning?
+
+Wildfires in Australia have always existed for the past ten years. In this section, we will focus on the relationship between wildfires and geographic locations. Because the data downloaded from NASA does not contain information about the specific state of each wildfire, so I will first divide data into different states according to the latitude and longitude. Since the borders of New South Wales and Victoria are not easily distinguished, putting these two states together, we can finally get the wildfire situation in different states in the past ten years.
+
+```{r state,fig.cap=" The number of wildfire in different states in the past ten years"}
+
+WA_fire <- nasa_fire %>% 
+  filter(longitude < 128) %>% 
+  mutate(Year = year(acq_date)) %>% 
+  mutate(state = "WA")
+
+NT_fire <- nasa_fire %>% 
+  filter(longitude < 138, latitude < '-25')  %>% 
+  filter(128<longitude) %>% 
+  mutate(Year = year(acq_date)) %>% 
+  mutate(state = "NT") 
+
+SA_fire <- nasa_fire %>% 
+  filter(longitude < 141, latitude > '-25')  %>% 
+  filter(128<longitude) %>% 
+  mutate(Year = year(acq_date)) %>% 
+  mutate(state = "SA") 
+
+QLD_1 <- nasa_fire %>% 
+  filter(longitude > 141, latitude < '-25')  %>% 
+  mutate(Year = year(acq_date)) %>% 
+  mutate(state = "QLD") 
+
+QLD_2  <- nasa_fire %>% 
+  filter(longitude > 141, latitude < '-29')  %>% 
+  filter(latitude >'-26') %>% 
+  mutate(Year = year(acq_date)) %>% 
+  mutate(state = "QLD")
+
+
+VIC_NSW  <- nasa_fire %>% 
+  filter(longitude > 141, latitude > '-29')  %>% 
+  mutate(Year = year(acq_date)) %>% 
+  mutate(state = "VIC_NSW") 
+
+state_fire <- bind_rows(WA_fire,NT_fire,SA_fire,VIC_NSW ,QLD_1,QLD_2) %>% 
+  group_by (state,Year) %>% 
+  summarise(total= n())
+ggplot(state_fire,aes(x = Year,y = total)) +
+  geom_col(color = "#69b3a2")+
+  facet_wrap(~state)+
+   theme(axis.text.y = element_text(color = "grey", 
+         face = "bold"),
+        plot.title = element_text(face = "bold"),
+         plot.background = element_rect(fill="white"),
+        panel.background = element_rect(fill="white"))
+ 
+```
+The fig\@{figure:state} clearly shows the largest number of fires almost happen in the Northern Territory and Queensland, one of the reasons is because the Northern Territory and Queensland have more forests. When it comes to the VIC_NSW, Since 2001, the number of fires has remained the same overall, except for 2019, which the number of fires has  When we focus on the year of 2019, we can see that, in some regions, the data in 2019 is indeed slightly higher than the surrounding years, the reason will explain in next part.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
