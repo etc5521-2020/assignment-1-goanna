@@ -136,7 +136,7 @@ temperature_new <- bind_rows(temperature_old, clean_temp_df)
 rainfall_new<-bind_rows(rainfall_old,clean_rain_df_canberra,clean_rain_df_brisbane)
 
 # write new temperature and rainfall data
-write_csv(temperature_new, here::here("data/2020-01-07/","temperature_new.csv"))
+write_csv(temperature_new, here::here("data","2020-01-07","temperature_new.csv"))
 write_csv(rainfall_new, here::here("data", "2020-01-07","rainfall_new.csv"))
 
 ```
