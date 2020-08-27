@@ -30,6 +30,26 @@ If you are interested in data cleansing process, you can find all data cleaning 
 
 Rstudio
 
+## R packages
+
+library(readr)
+library(tidyverse)
+library(here)
+library(knitr)
+library(lubridate)
+library(ggplot2)
+library(GGally)
+library(dygraphs)
+library(xts)
+library(kableExtra)
+library(leaflet)
+library(hrbrthemes)
+library(dplyr)
+
+# Licence
+
+Our project under the license(CC0 2.0 Universal).
+
 
 
 
