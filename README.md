@@ -33,17 +33,29 @@ Rstudio
 ## R packages
 
 library(readr)
+
 library(tidyverse)
+
 library(here)
+
 library(knitr)
+
 library(lubridate)
+
 library(ggplot2)
+
 library(GGally)
+
 library(dygraphs)
+
 library(xts)
+
 library(kableExtra)
+
 library(leaflet)
+
 library(hrbrthemes)
+
 library(dplyr)
 
 # Licence
