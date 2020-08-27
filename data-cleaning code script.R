@@ -1,5 +1,4 @@
 
-```{r tem-function}
 # clean temperature
 # expand the time range of temperature
 
@@ -32,19 +31,16 @@ read_clean_temp_data <- function(file_name){
     select(city_name, date, temperature, temp_type, site_name)
 
 }
-```
 
-
-```{r tem-expand, message=FALSE}
-# map raw data
+# map raw data with temperature
 clean_temp_df <- read_temp_list %>%
   purrr::map(read_clean_temp_data) %>%
   bind_rows() %>%
   mutate(date = as.Date(date, "%Y-%m-%d"))%>%
   filter(date > "2019-05-31" & date <= "2020-01-05")
-```
 
-```{r rain-b-function}
+
+
 # expand the time range of rainfall for Brisbane
 name_df_b <- tribble(
   ~station_code, ~city_name, ~lat, ~long, ~station_name,
@@ -68,10 +64,10 @@ read_clean_precip_data_b <- function(file_name){
     left_join(name_df_b, by = "station_code") %>%
     select(station_code, city_name, everything())
 }
-```
 
 
-```{r rain-c-function}
+
+
 # expand the time range of rainfall for Canberra
 name_df_c <- tribble(
   ~station_code, ~city_name, ~lat, ~long, ~station_name,
@@ -95,9 +91,9 @@ read_clean_precip_data_c <- function(file_name){
     left_join(name_df_c, by = "station_code") %>%
     select(station_code, city_name, everything())
 }
-```
 
-```{r rain-expand-canberra, message=FALSE}
+
+
 # select the time range with Canberra data
 clean_rain_df_canberra <- read_precip_list %>%
   purrr::map(read_clean_precip_data_c) %>%
@@ -108,9 +104,7 @@ clean_rain_df_canberra <- read_precip_list %>%
                              "70246"= "070351"))%>%
   select(-date)
 
-```
 
-```{r rain-expand-brisbane, message=FALSE}
 # select the time range with brisbane data
 clean_rain_df_brisbane <- read_precip_list %>%
   purrr::map(read_clean_precip_data_b) %>%
@@ -121,9 +115,7 @@ clean_rain_df_brisbane <- read_precip_list %>%
                              "40140"="040913"))%>%
   select(-date)
 
-```
 
-```{r merge-data, message=FALSE, warning=FALSE}
 # Get the cleaned data from Github
 # the time range for old temperature data is from 1910-01-01 to 2019-05-31
 rainfall_old <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-01-07/rainfall.csv')
@@ -139,5 +131,5 @@ rainfall_new<-bind_rows(rainfall_old,clean_rain_df_canberra,clean_rain_df_brisba
 write_csv(temperature_new, here::here("data","2020-01-07","temperature_new.csv"))
 write_csv(rainfall_new, here::here("data", "2020-01-07","rainfall_new.csv"))
 
-```
+
 
