@@ -8,6 +8,24 @@ Team members:
 * XITONG HE
 * CUIPING WEI
 
+# Tips for reproduction
+
+## Install git lfs
+Our report data contains large files. In order to reproduce the report normally, please install Git LFS first.
+
+* For Macbook user:  
+1. install Homebrew first  
+2. install git lfs (command: brew git lfs install)  
+[Link](http://macappstore.org/git-lfs/)  
+  
+* For Windows user:
+command: `git lfs install`
+  
+Once you finished installation, you can use command `git lfs install` again to check if you install it or not. If the output is `Git LFS initialized`, which means you have install it successfully.  
+
+
+
+
 # Steps
 
 4. Write your data description under the header Data description in `index.Rmd`. A data description should tell the reader the source of the data, and detail the structure of the data, including variables, time frame of collection, collection methods. 
