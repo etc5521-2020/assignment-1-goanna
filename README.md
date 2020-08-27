@@ -23,6 +23,13 @@ command: `git lfs install`
   
 Once you finished installation, you can use command `git lfs install` again to check if you install it or not. If the output is `Git LFS initialized`, which means you have install it successfully.  
 
+## Data cleaning code
+If you are interested in data cleansing process, you can find all data cleaning code in `data-cleaning code script.R`.
+
+## Software
+
+Rstudio
+
 
 
 
