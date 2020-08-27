@@ -76,7 +76,7 @@ rainfall <- read.csv(here::here("data/2020-01-07/rainfall_new.csv"))
 ## Australua fire data
 
 The `fire` data source is from [NASA](https://firms.modaps.eosdis.nasa.gov/download/)[@nasa] "Active Fires Dataset" via the MODIS fire product collection. MODIS active fire product is detected the fire data in every 5 minutes and collected through each tile with horizontal and vertical coordinate.The data contains the fire information of Australia with `r nrow(nasa_fire)` observations from 2000-11-01 to 2020-01-05.   
-The variables information included in the data are as the following table, latitude, longtitude and acq_date variables were mainly used for this analysis.    
+The variables information included in the data are as the following table, latitude, longitude and acq_date variables were mainly used for this analysis.    
 
 ```{r fire-data, warning=FALSE, message=FALSE}
 fire_data <- data.frame(
@@ -178,7 +178,7 @@ The Australian climate is generally hot and dry, bushfires can occur at anytime 
 
 ```{r when,fig.cap="The number of Australian fires in 12 month between 2001 and 2020", warning=FALSE, message=FALSE}
 data_fire_Year <- nasa_fire %>% 
-  mutate(acq_date = as.POSIXlt(acq_date)) %>% 
+  mutate(acq_date = as.POSIXct(acq_date)) %>% 
   mutate(Year =year(acq_date),Month = month(acq_date)) %>% 
   mutate(Year = factor(Year)) %>% 
   group_by(Year,Month)%>% 
@@ -489,8 +489,8 @@ From the above analysis, we can further clarify that the high-temperature weathe
 
 ## The less rainfall, the more bushfire {#rain}
 
-Has the less rainfall affected the more bushfire in Australia? Or has the more rainfall influenced the less bushfire?   Because of the location of Australia, the rainfall in Australia is highly variable, which is strongly influenced by global climate system phenomena such as El Niño, La Niña, and IOD. Despite this large natural variability, the potential long-term trends are evident in some regions, even effecting the local rainfall.   
-In this section, we will explore the relationship between rainfall and bushfire, is it positive or negative?   
+Has the less rainfall affected the more bushfires in Australia? Or has the more rainfall influenced the less bushfires?   Because of the location of Australia, the rainfall in Australia is highly variable, which is strongly influenced by global climate system phenomena such as El Niño, La Niña, and IOD. Despite this large natural variability, the potential long-term trends are evident in some regions, even effecting the local rainfall.   
+In this section, we will explore the relationship between rainfall and bushfires, is it positive or negative?   
   
 As a first step, we analyzed the overall situation of annual rainfall. There are six cities in rainfall data, of which Sydney has been recorded the rainfall data from 1850, but most of the other cities start from around 1970. Therefore, we selected the rainfall data from 1970 for using the same scale in the year variable. To calculate the annual average rainfall situation, using the six cities which are from six states or regions in Australia to estimate the overall yearly average rainfall.  Also, we calculated the annual average rainfall from 1961 to 1990, which is the baseline used by the Australian BOM to compare annual average rainfall difference[@bureau2019annual].
 
@@ -536,7 +536,7 @@ dygraph(rain_year_dat) %>%
 
 Figure \@ref(fig:rain-yearly-plot) shows how the annual rainfall has changed over time in Australia. An extremely severe drought occurred in 1994, and this drought was influenced by a healthy El Niño weather pattern, the fifth continuous year of drought in parts of Australia[@nicholls2004changing]. Also, although the variability of natural weather in Australia is vast, 2019 became the driest year in the recent 20 years. One reason is that the strongest positive IOD reached the highest values on record across 60 years, and due to the frequency and influence of sea-surface temperature changes, the El Nino-Southern Oscillation(ENSO) is neutral throughout the year. Because of the positive IOD, it severely curtailed the Walker Circulation, and abnormal easterly winds appear in the Indian Ocean and prevailing winds in northwest Australia blow from the continent to the ocean. These winds swept away large amounts of cloud cover over Australia, so the rainfall has been declined dramatically based on that[@hughes2003climate]. Also, the annual rainfall in 2010 was the highest in 20 years, which is the wettest year since 2000 because of the climate system such as La Niña events.  
   
-Comparing with Figure \@ref(fig:fire-yearly-plot), the number of bushfire in Australia has fluctuated but the average of fire more than 250,000 cases in each year in the last 20 years. And the number of total bushfires is the lowest one in 2010, possibly because of the highest annual rainfall in 2010, which can be contributed to dry relief conditions and reduce the fuel load leading.  
+Comparing with Figure \@ref(fig:fire-yearly-plot), the number of bushfires in Australia has fluctuated but the average of fire more than 250,000 cases in each year in the last 20 years. And the number of total bushfires is the lowest one in 2010, possibly because of the highest annual rainfall in 2010, which can be contributed to dry relief conditions and reduce the fuel load leading.  
   
 From Figure \@ref(fig:rain-diff-annual), the annual average rainfall changed cross-time compare with the average baseline. The overall situation is that the rainfall difference of most of the years is below the average, especially for the last 20 years. Even though the annual rainfall difference is above the baseline but it is still above a few in 2010 and 2011. Also, 2019 is still the lowest rainfall difference in the recent 20 years.  
 ```{r baseline-rain, warning=FALSE, message=FALSE}
@@ -657,7 +657,7 @@ GGally::ggpairs(all_data,c(4:6))+
                                     fill = NA))
 ```
 
-From Figure \@ref(fig:correlation), it seems that the rainfall and bushfire ha negative correlation, suggesting that the more rainfall and the less bushfire. On the contrary, the higher temperature and the more bushfires, although the correlation between these two variables is slightly small, while the relationship between them still can be evaluated. Moreover, the rainfall will be declined when the temperature would get higher. Temperatures will impact the rate of evaporation, with higher temperatures leading to faster soil moisture loss[@hausfather2018explainer].  
+From Figure \@ref(fig:correlation), it seems that the rainfall and bushfires have negative correlation, suggesting that the more rainfall and the less bushfires. On the contrary, the higher temperature and the more bushfires, although the correlation between these two variables is slightly small, while the relationship between them still can be evaluated. Moreover, the rainfall will be declined when the temperature would get higher. Temperatures will impact the rate of evaporation, with higher temperatures leading to faster soil moisture loss[@hausfather2018explainer].  
   
 In conclusion, the main climatic conditions of bushfire is hot and dry[@van2020attribution]. The graph of annual rainfall and temperature show that the hottest and driest year is 2019, which has the most massive bushfires in Australia as well. Therefore, as the combination of arid and severe hot conditions adds up to more powerful fires, indicating that declines in rainfall and increases in temperature have likely been a primary driver of increases in wildfire area burned.  
 
@@ -672,7 +672,7 @@ This research briefly analyzes when and where bushfires are more likely to occur
 
 # Acknowlegments
 
-The authors would like to thank all the contributors to the following R package: @tidyverse,  @ggplot2, @readr, @leaflet, @xts, @here, @base, @ggthemes, @dplyr, @dygraphs, @lulbridate, @ggally.
+The authors would like to thank all the contributors to the following R package: @tidyverse,  @ggplot2, @readr, @leaflet, @xts, @here, @base, @ggthemes, @dplyr, @dygraphs, @lulbridate, @ggally,@hrbrthemes.
 
 # References
 
