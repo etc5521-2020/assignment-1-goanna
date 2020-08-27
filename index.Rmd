@@ -9,12 +9,15 @@ author:
 bibliography: references.bib
 biblio-style: authoryear-comp
 link-citations: yes
-linestretch: 2
+linestretch: 3
 date: "`r Sys.Date()`"
 output: 
   bookdown::html_document2: 
-  theme: paper
-  citation_package: biblatex
+    toc: yes
+    toc_float:
+      collapsed: true
+      number_sections: false
+    theme: paper
 ---
 [This assignment is for ETC5521 Assignment 1 by Team `r rmarkdown::metadata$team` comprising of `r knitr::combine_words(rmarkdown::metadata$author)`.]{style="color:#006DAE;"}
 
@@ -49,8 +52,7 @@ select <- dplyr::select
 </center>
 
 # Introduction and motivation
-Bushfires that raged in Australia from September 2019 to early 2020 captured the attention of people worldwide, especially the out-of-control bushfires in Victoria and New South Wales(NSW). However, looking at the Australian bushfires' history data, we can find that Australia suffers from different degrees and quantities of bushfires every year. It is exciting to explore the link between Australian fire history and climate change. What climatic conditions caused the frequent occurrence of the bushfires in Australia?    
-  
+Bushfires that raged in Australia from September 2019 to early 2020 captured the attention of people worldwide, especially the out-of-control bushfires in Victoria and New South Wales(NSW). However, looking at the Australian bushfires' history data, we can find that Australia suffers from different degrees and quantities of bushfires every year. It is exciting to explore the link between Australian fire history and climate change. **What climatic conditions caused the frequent occurrence of the bushfires in Australia?**      
 In this analysis, R is the main tool for data cleaning and analysis.  
 The rest of the analysis proceeds as follows. Section \@ref(data) presents the data description. Section \@ref(analysis) details the findings in data analysis. The limitations of the analysis are presented in Section \@ref(limitation). Finally, Section \@ref(conclusion) provides the conclusions of this analysis.  
   
@@ -117,8 +119,7 @@ The `temperature` data is divided into two parts, with the cleaned data obtained
   
 Also, there are seven weather stations were chosen, based on seven Australian cities such as  Perth, Adelaide, Melbourne, Sydney, Brisbane, Port Lincoln and Canberra.   
   
-The climate data structure is shown as the below tables.  
-In this analysis, date, temperature and temp_type variables for `temperature` data set were mainly used, and year, city_name and rainfall variables for `rainfall` data set as well.   
+The climate data structure is shown as the below tables.In this analysis, date, temperature and temp_type variables for `temperature` data set were mainly used, and year, city_name and rainfall variables for `rainfall` data set as well.   
 
 ```{r temp-data, warning=FALSE, message=FALSE}
 temperature_data <- tibble(Variable = c("city_name", "date", "temperature", "temp_type", "site_name"),
@@ -487,7 +488,7 @@ dygraph(fire_year_dat) %>%
 Figure \@ref(fig:fire-yearly-plot) shows the annual trend of total number of fires in Australia from 2001 to 2019. Compared with Figure \@ref(fig:temp-yearly-plot), the annual total fire occurrences trend fluctuates mostly in a consistent pattern. When the temperature is high, there are generally more fires, and vice versa. However, there are an unexpected fact that the fires occurrence in 2012 ranked first with 474,964, but the annual average temperature in 2012 was relatively low with 22.57°C. And we found that the raged bushfires in 2012 that were caused by lightning at the beginning, and lightning was predominantly responsible for the bushfires[@dowdy2012characteristics].   
 From the above analysis, we can further clarify that the high-temperature weather in 2019 is closely related to bushfires, and high temperature makes forest fuels more susceptible to cause bushfires[@oldenborgh2020attribution].   
 
-## The less rainfall, the more bushfire {#rain}
+## The less rainfall, the more bushfires {#rain}
 
 Has the less rainfall affected the more bushfires in Australia? Or has the more rainfall influenced the less bushfires?   Because of the location of Australia, the rainfall in Australia is highly variable, which is strongly influenced by global climate system phenomena such as El Niño, La Niña, and IOD. Despite this large natural variability, the potential long-term trends are evident in some regions, even effecting the local rainfall.   
 In this section, we will explore the relationship between rainfall and bushfires, is it positive or negative?   
@@ -670,9 +671,9 @@ This section mainly introduces two main limitations of this analysis:
 # Conclusions {#conclusion}
 This research briefly analyzes when and where bushfires are more likely to occur and the climate conditions under which they occur. And we find that the bushfires are prone to the month from August and November every year, and the Northern Territory and Western Australia are the most prone to fires. Moreover, high temperature and drought are critical climatic conditions for the occurrence of bushfires. For future research, it will be interesting to explore how to prevent bushfires in terms of climate conditions and to analyze the effects of climate change in bushfires.     
 
-# Acknowlegments
+# Acknowlegments{-}
 
-The authors would like to thank all the contributors to the following R package: @tidyverse,  @ggplot2, @readr, @leaflet, @xts, @here, @base, @ggthemes, @dplyr, @dygraphs, @lulbridate, @ggally,@hrbrthemes.
+The authors would like to thank all the contributors to the following R package: @tidyverse,  @ggplot2, @readr, @leaflet, @xts, @here, @base, @ggthemes, @dplyr, @dygraphs, @lulbridate, @ggally, @hrbrthemes.
 
 # References
 
