@@ -1,12 +1,12 @@
-# ETC5521 Assignment 1 
+# ETC5521 Assignment 2 
 
 Team name: goanna
 
 Team members:
 
-* XUE WANG
-* XITONG HE
-* CUIPING WEI
+* Emily Sheehan
+* Chengzhi Ye
+* Dea Avega Editya
 
 # Tips for reproduction
 
@@ -61,7 +61,6 @@ library(dplyr)
 # Licence
 
 Our project under the license(CC0 2.0 Universal).
-
 
 
 
