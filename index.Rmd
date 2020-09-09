@@ -3,9 +3,9 @@ title: "ETC5521 Assignment 1"
 subtitle: "Australian bushfires: The effect of climatic condition"
 team: goanna
 author:
-  - XUE WANG
-  - XITONG HE
-  - CUIPING WEI
+  - 
+  - 
+  - Dea Avega Editya
 bibliography: references.bib
 biblio-style: authoryear-comp
 link-citations: yes
@@ -71,6 +71,12 @@ There are three data sets used on this analysis, and the cleaned data is obtaine
 ```{r read-data, warning=FALSE, message=FALSE}
 # please find the data cleaning code in *data-cleaning code script.R*
 nasa_fire <- readr::read_csv(here::here("data/2020-01-07/fire_archive_M6_147063.csv")) %>% select(-instrument,-type)
+
+#write to rds dataset to make it smaller
+#save(nasa_fire, file = "nasa_fire.Rdata")
+#load data .Rdata by using: load(file = "nasa_fire.Rdata")
+
+
 temperature <- read.csv(here::here("data/2020-01-07/temperature_new.csv"))
 rainfall <- read.csv(here::here("data/2020-01-07/rainfall_new.csv"))
 ```
