@@ -40,6 +40,7 @@ library(leaflet)
 library(hrbrthemes)
 library(dplyr)
 library(miceadds)
+library(plotly)
 
 select <- dplyr::select
 ```
@@ -226,31 +227,31 @@ p1 <- data_fire_Year %>%
         plot.background = element_rect(fill="white"),
         panel.background = element_rect(fill="white"))
  
-p1
+ggplotly(p1) 
 ```
 From Figure \@ref(fig:when), there are some unusual phenomena. 
 Firstly, we can see that the bushfires trend line in 2019 is quite different from other years, the main reason for that is the occurrence of extensive bushfires in Australia for 2019. And the bushfires from September 2019 is the most massive bushfire since European settlement[@nolan2020causes]. Moreover, there was a significant increase in the number of bushfires in September 2011, far more than in any other year in the same period. As @blanchi2014environmental states, the combination of low rainfalls and strong winds led to the outbreak of bushfires in 2011.  
 
 ```{r average-rain, fig.cap ="Average monthly rainfall from 2001", warning=FALSE, message=FALSE}
 rain_agv <- rainfall %>% 
-  filter(year> "2001") %>% 
-  group_by (month) %>% 
+  filter(year == "2011") %>% 
+  group_by (month, city_name) %>% 
   summarise(`Average rainfall`= mean(rainfall,na.rm=TRUE)) %>% 
   arrange(`Average rainfall`)
   
 rain_agv %>%
-  mutate(month=factor(month, month)) %>%
+  mutate(month=factor(month)) %>%
   ggplot(aes(x=month, y=`Average rainfall`) ) +
     geom_segment(aes(x=month ,xend= month, y=0, yend=`Average rainfall`), color="grey") +
     geom_point(size=3, color="#69b3a2") +
-    coord_flip() +
     theme_ipsum() +
     theme(
       panel.grid.minor.y = element_blank(),
       panel.grid.major.y = element_blank(),
       legend.position="none") +
     xlab("Month")+
-    ggtitle("Average monthly rainfall from 2001") 
+    ggtitle("Average monthly rainfall in 2011") +
+    facet_wrap(~city_name) 
 
 ```
 Also, it's interesting to find that bushfires are more likely to occur in May, and month from August to November, especially October. However, August to October is the winter to spring period in Australia. It seems that the frequent occurrence of bushfires during this period mainly due to dryness, which makes forest fuels more likely to catch fire[@sullivan2012fuel]. Moreover, comparing with Figure \@ref(fig:average-rain), it can be easy to find that the driest months are September, October and May, which coincided with the peak of the bushfires.   
