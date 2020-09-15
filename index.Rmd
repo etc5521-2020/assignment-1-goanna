@@ -39,6 +39,7 @@ library(kableExtra)
 library(leaflet)
 library(hrbrthemes)
 library(dplyr)
+library(miceadds)
 
 select <- dplyr::select
 ```
@@ -76,7 +77,7 @@ There are three data sets used on this analysis, and the cleaned data is obtaine
 #save(nasa_fire, file = "nasa_fire.Rdata")
 # load data .Rdata
 
-nasa_fire <- load(file = "nasa_fire.Rdata")
+nasa_fire <- load.Rdata2(filename = "nasa_fire.Rdata")
 
 
 temperature <- read.csv(here::here("data/2020-01-07/temperature_new.csv"))
