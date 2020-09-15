@@ -179,13 +179,27 @@ rainfall_data%>%
                 position = "center")
 ```
 
+# Limitations of analysis {#limitation}
+
+This section mainly introduces two main limitations of this analysis:   
+- There is no regional division in the fire data. We have indistinctly divided seven states or regions according to Australia's longitude and latitude, which may lead to bias in the analysis results for location.   
+- The temperature and rainfall data include only some major cities, and comparing with the fire data, the sample is too small. Therefore,  the analysis of the link between fires and climate data in Section \@ref(analysis) is not accurate and will cause deviation in results.  
+
 # Analysis and findings {#analysis}
 
-## When and where were the most widespread bushfires burning?  
+## Climate Conditions
 
-The Australian climate is generally hot and dry, bushfires can occur at anytime of the year for the most of regions[@bushfire]. However, are there more bushfires prefer happened in the summer or winter? Did bushfires more likely to occur in Northern Territory(NT)?  In this section, we will discuss it by analyzing the bushfire data for the past 20 years.  
+### Where does rainfall occur the most in Australia? 
 
-### Which month did bushfires prefer? {#month}
+
+### Where is the hottest climate in Australia?
+
+
+## Bushfires
+
+The Australian climate is generally hot and dry, bushfires can occur at anytime of the year for the most of regions[@bushfire]. However, are there more bushfires prefer happened in the summer or winter? Did bushfires more likely to occur in Northern Territory(NT)?  In this section, we will discuss it by analyzing the bushfire data for the past 20 years. 
+
+### In which months are bushfires burning? {#month}
 
 ```{r when,fig.cap="The number of Australian fires in 12 month between 2001 and 2020", warning=FALSE, message=FALSE}
 data_fire_Year <- nasa_fire %>% 
@@ -256,8 +270,7 @@ rain_agv %>%
 ```
 Also, it's interesting to find that bushfires are more likely to occur in May, and month from August to November, especially October. However, August to October is the winter to spring period in Australia. It seems that the frequent occurrence of bushfires during this period mainly due to dryness, which makes forest fuels more likely to catch fire[@sullivan2012fuel]. Moreover, comparing with Figure \@ref(fig:average-rain), it can be easy to find that the driest months are September, October and May, which coincided with the peak of the bushfires.   
 
-
-### Which location did bushfires prefer?
+### Where are the bushfires burning?
 
 In this part, we will focus on the relationship between bushfires and geographic locations. 
 Firstly, we divided fire data into different states or regions according to the latitude and longitude, because the data downloaded from NASA does not contain information for states or regions. Since the borders of NSW and Victoria are not easily distinguished, so we finally putting them together as one region.  
@@ -336,8 +349,9 @@ leaflet(data = subset) %>%
 
 ```
 
+## How does temperature and rainfall affect the number of bushfires?
 
-## The higher the temperature, the more bushfires {#temp}
+### Positive association with temperature and bushfires {#temp}
 
 Were bushfires more likely to happen with higher temperatures in Australia? In this section, we will explore the relationship between the two in-depth.   
 
@@ -379,7 +393,6 @@ dygraph(temp_year_dat) %>%
   dySeries("V1", label = "Average temperature(°C)")
 
 ```
-
 
 As a first step, we calculated the annual average temperature from 1910 to 2019 and drew a time series plot. From the Figure \@ref(fig:temp-yearly-plot), it can be seen that the average temperature in 2019 is significantly higher than in other years. A strong positive Indian Ocean Dipole (IOD) phenomenon was the culprit[@harris2019understanding], and contributed to very high temperature and low rainfall across Australia[@bureau2019annual], which began in May 2019 and lasted until the end of the year.   
 
@@ -498,7 +511,7 @@ dygraph(fire_year_dat) %>%
 Figure \@ref(fig:fire-yearly-plot) shows the annual trend of total number of fires in Australia from 2001 to 2019. Compared with Figure \@ref(fig:temp-yearly-plot), the annual total fire occurrences trend fluctuates mostly in a consistent pattern. When the temperature is high, there are generally more fires, and vice versa. However, there are an unexpected fact that the fires occurrence in 2012 ranked first with 474,964, but the annual average temperature in 2012 was relatively low with 22.57°C. And we found that the raged bushfires in 2012 that were caused by lightning at the beginning, and lightning was predominantly responsible for the bushfires[@dowdy2012characteristics].   
 From the above analysis, we can further clarify that the high-temperature weather in 2019 is closely related to bushfires, and high temperature makes forest fuels more susceptible to cause bushfires[@oldenborgh2020attribution].   
 
-## The less rainfall, the more bushfires {#rain}
+### Negative association with rain and bushfires {#rain}
 
 Has the less rainfall affected the more bushfires in Australia? Or has the more rainfall influenced the less bushfires?   Because of the location of Australia, the rainfall in Australia is highly variable, which is strongly influenced by global climate system phenomena such as El Niño, La Niña, and IOD. Despite this large natural variability, the potential long-term trends are evident in some regions, even effecting the local rainfall.   
 In this section, we will explore the relationship between rainfall and bushfires, is it positive or negative?   
@@ -616,7 +629,7 @@ ggplot(rain_diff,aes(x=year, y=diff,fill=as.factor(ismax))) +
 From the above analysis, we can make some insights that the low rainfall in 2019 is closely related to bushfires.   
 
 
-## The correlation between climatic conditions and bushfires
+### The correlation between climatic conditions and bushfires
 
 From Section \@ref(temp) and \@ref(rain), we know that temperature, rainfall, and fire are related, but how closely are they related? In this part, we mainly explore the correlation coefficient between them.   
 
@@ -671,12 +684,6 @@ GGally::ggpairs(all_data,c(4:6))+
 From Figure \@ref(fig:correlation), it seems that the rainfall and bushfires have negative correlation, suggesting that the more rainfall and the less bushfires. On the contrary, the higher temperature and the more bushfires, although the correlation between these two variables is slightly small, while the relationship between them still can be evaluated. Moreover, the rainfall will be declined when the temperature would get higher. Temperatures will impact the rate of evaporation, with higher temperatures leading to faster soil moisture loss[@hausfather2018explainer].  
   
 In conclusion, the main climatic conditions of bushfire is hot and dry[@van2020attribution]. The graph of annual rainfall and temperature show that the hottest and driest year is 2019, which has the most massive bushfires in Australia as well. Therefore, as the combination of arid and severe hot conditions adds up to more powerful fires, indicating that declines in rainfall and increases in temperature have likely been a primary driver of increases in wildfire area burned.  
-
-# Limitations of analysis {#limitation}
-
-This section mainly introduces two main limitations of this analysis:   
-- There is no regional division in the fire data. We have indistinctly divided seven states or regions according to Australia's longitude and latitude, which may lead to bias in the analysis results for location.   
-- The temperature and rainfall data include only some major cities, and comparing with the fire data, the sample is too small. Therefore,  the analysis of the link between fires and climate data in Section \@ref(analysis) is not accurate and will cause deviation in results.  
 
 # Conclusions {#conclusion}
 This research briefly analyzes when and where bushfires are more likely to occur and the climate conditions under which they occur. And we find that the bushfires are prone to the month from August and November every year, and the Northern Territory and Western Australia are the most prone to fires. Moreover, high temperature and drought are critical climatic conditions for the occurrence of bushfires. For future research, it will be interesting to explore how to prevent bushfires in terms of climate conditions and to analyze the effects of climate change in bushfires.     
