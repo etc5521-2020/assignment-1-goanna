@@ -42,6 +42,8 @@ library(dplyr)
 library(miceadds)
 library(plotly)
 library(RColorBrewer)
+library(corrplot)
+library(dichromat)
 
 select <- dplyr::select
 ```
@@ -740,6 +742,8 @@ p3 <- ggplot(data=temperature_year, aes(x=year, y=city_name)) +
 ggplotly(p3)
 ```
 
+
+
 ```{r geomline}
 data_fire_Year_line <- nasa_fire %>% 
   mutate(acq_date = as.POSIXct(acq_date)) %>% 
@@ -777,6 +781,8 @@ fire_temp <- data_fire_Year_line %>%
   drop_na()
 ```
 
+
+
 ```{r}
 scl <- 1000
 p4 <- ggplot(fire_temp, aes(x = time)) + 
@@ -793,6 +799,23 @@ ggplotly(p4)
 ```
 
 
+```{r correlation, fig.cap="The correlation between rainfall, temperature and bushfires"}
+
+Cor <- cor(all_data)
+corrplot(Cor, method = 'color', 
+                     order = 'hclust', 
+                     type = 'upper', 
+                     diag = FALSE, 
+                     tl.col = 'black',
+                     addCoef.col = "grey30",
+                     number.cex = 1.2,
+                     col = colorRampPalette(colors = c('red', 'white', 'blue'))(200),
+                     main = 'Weather and Bushfires Correlation',
+                     mar = c(1,1,1,1),
+                     family = 'Avenir')
+
+
+```
 
 
 
