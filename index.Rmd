@@ -783,13 +783,13 @@ fire_temp <- data_fire_Year_line %>%
 
 
 
-```{r}
+```{r, fig.cap="The Trend of Temperature and Bushfires"}
 scl <- 1000
 p4 <- ggplot(fire_temp, aes(x = time)) + 
   geom_line(aes(y = Total/scl, colour = "Total")) + 
   geom_line(aes(y = avg, colour = "Avg")) +
   scale_y_continuous(sec.axis = sec_axis(~./scl, name = "Avg"))+ 
-  ggtitle("") +
+  ggtitle("The Trend of Temperature and Bushfires") +
   theme_bw() +
   theme(axis.text.y = element_text(color = "grey", face = "bold"),
   plot.title = element_text(face = "bold"),
@@ -798,6 +798,18 @@ p4 <- ggplot(fire_temp, aes(x = time)) +
 ggplotly(p4)
 ```
 
+```{r, fig.cap="The Trend of Rainfall and Bushfires"}
+scl2 <-10000
+p5 <- ggplot(fire_rain, aes(x = time)) + 
+  geom_line(aes(y = Total/scl2, colour = "Total")) + 
+  geom_line(aes(y = `Average rainfall`, colour = "Avg")) +
+  scale_y_continuous(sec.axis = sec_axis(~./scl2, name = "Avg Rainfall"))
+  ggtitle("The Trend of Rainfall and Bushfires") +
+  theme_bw() +
+  theme(plot.title = element_text(face = "bold"), plot.background = element_rect(fill="white"))
+
+ggplotly(p5)
+```
 
 ```{r correlation, fig.cap="The correlation between rainfall, temperature and bushfires"}
 
