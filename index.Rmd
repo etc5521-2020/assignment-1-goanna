@@ -811,7 +811,7 @@ p5 <- ggplot(fire_rain, aes(x = time)) +
 ggplotly(p5)
 ```
 
-```{r correlation, fig.cap="The correlation between rainfall, temperature and bushfires"}
+```{r correlation_color, fig.cap="The correlation between rainfall, temperature and bushfires"}
 
 Cor <- cor(all_data)
 corrplot(Cor, method = 'color', 
@@ -828,6 +828,36 @@ corrplot(Cor, method = 'color',
 
 
 ```
+
+From Figure \@ref(fig:correlation_color), it seems that the rainfall and bushfires have small negative correlation, which is only 30%. This means that if the average annual precipitation increases, the probability of bushfires may decrease with 30% of the increase in precipitation. 
+
+As for temperature and bushfires, the correlation between these two variables is only 0.13 which is too close to 0. Therefore, Our group believes that there is no correlation between temperature and occurrence of bushfires in the past 20 years. More data may be needed later to draw the different conclusion.
+
+Finally, let's observe the precipitation and temperature. The correlation between them is -0.47, which is the largest absolute value among the three correlations, which indicates that their correlation degree is the highest. The correlation coefficient of 0.47 means that if the temperature rises, the precipitation will decrease to 47% of the range that rise. In my opinion, this is because temperatures will impact the rate of evaluation, with higher temperatures leading to drier weather and faster air moisture loss. [@hausfather2018explainer].  
+  
+In conclusion, from corrplot it is clear that the main climatic conditions to affect bushfires is the decreasing of the rainfall. What surprided our group was that the direct effect of temperature rise on Australian bushfires occurrence was almost 0. However, due to the temperature will affect the precipitation and thus the occurrence of bushfires, so people should pay attention to the greenhouse effect and other issues. The upper graphs show that 2019 is the hot and drive year in Australia, which also has the most massive bushfires occurred. That discovery confirms the accuracy of our corrplot again. The increase of temperature leads to the decrease of rainfall have been a primary driver of increases in bushfires area of Australia.
+
+[@van2020attribution]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
