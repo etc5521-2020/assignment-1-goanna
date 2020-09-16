@@ -41,6 +41,7 @@ library(hrbrthemes)
 library(dplyr)
 library(miceadds)
 library(plotly)
+library(RColorBrewer)
 
 select <- dplyr::select
 ```
@@ -243,6 +244,9 @@ p1 <- data_fire_Year %>%
  
 ggplotly(p1) 
 ```
+
+
+
 From Figure \@ref(fig:when), there are some unusual phenomena. 
 Firstly, we can see that the bushfires trend line in 2019 is quite different from other years, the main reason for that is the occurrence of extensive bushfires in Australia for 2019. And the bushfires from September 2019 is the most massive bushfire since European settlement[@nolan2020causes]. Moreover, there was a significant increase in the number of bushfires in September 2011, far more than in any other year in the same period. As @blanchi2014environmental states, the combination of low rainfalls and strong winds led to the outbreak of bushfires in 2011.  
 
@@ -316,7 +320,7 @@ state_fire <- bind_rows(WA_fire,NT_fire,SA_fire,VIC_NSW ,QLD_1,QLD_2) %>%
   group_by (state,Year) %>% 
   summarise(Total= n())
 ggplot(state_fire,aes(x = Year,y = Total)) +
-  geom_col(fill = "#69b3a2")+
+  geom_col(fill = "grey")+
   facet_wrap(~state)+
    theme(axis.text.y = element_text(color = "grey", 
          face = "bold"),
@@ -369,7 +373,9 @@ temp_year <- temperature %>%
   summarise(avg = mean(temperature,na.rm = TRUE)) %>% 
   mutate(time = paste0(year, "-01-01"),
          time = as.Date(time)) 
+
 ```
+
 
 ```{r temp-yearly-plot,message=FALSE, warning=FALSE, fig.cap="Annual average temperature trends from 1910 to 2019, calculated by daily maximum temperature", fig.align='center'}
 # prepare time series data
@@ -506,6 +512,7 @@ dygraph(fire_year_dat) %>%
               hideOnMouseOut = FALSE)  %>%
   dyRoller(rollPeriod = 1)%>% 
   dySeries("V1", label = "Total bushfires number")
+
 ```
 
 Figure \@ref(fig:fire-yearly-plot) shows the annual trend of total number of fires in Australia from 2001 to 2019. Compared with Figure \@ref(fig:temp-yearly-plot), the annual total fire occurrences trend fluctuates mostly in a consistent pattern. When the temperature is high, there are generally more fires, and vice versa. However, there are an unexpected fact that the fires occurrence in 2012 ranked first with 474,964, but the annual average temperature in 2012 was relatively low with 22.57°C. And we found that the raged bushfires in 2012 that were caused by lightning at the beginning, and lightning was predominantly responsible for the bushfires[@dowdy2012characteristics].   
@@ -693,5 +700,127 @@ This research briefly analyzes when and where bushfires are more likely to occur
 The authors would like to thank all the contributors to the following R package: @tidyverse,  @ggplot2, @readr, @leaflet, @xts, @here, @base, @ggthemes, @dplyr, @dygraphs, @lulbridate, @ggally, @hrbrthemes.
 
 # References
+
+# Year section
+```{r}
+data_fire_Year  %>%
+  ggplot(aes(x = Month, y = Total)) +
+  geom_line() +
+  geom_text(aes(label = Total_fire), color = "red", vjust = 1.5) +
+  xlab("Year") +
+  ylab("Number of Fires") +
+  ggtitle("Number of Fires by Year") 
+```
+
+
+
+```{r rainboxplot, fig.cap ="Average monthly rainfall from 2001", warning=FALSE, message=FALSE}
+rain_jitter <- rainfall %>% 
+  filter(year == "2011") %>% 
+  select(city_name, year, month, day, rainfall)
+  
+ggplot(data = rain_jitter,
+       aes(x = month,y = rainfall,color = rainfall)) + 
+       scale_color_gradientn(colours=rev(brewer.pal(10,'Spectral'))) + 
+       geom_jitter(shape=16,position=position_jitter(0.2),size=1.8) + 
+       theme_ipsum() +
+    theme(
+      panel.grid.minor.y = element_blank(),
+      panel.grid.major.y = element_blank(),
+      legend.position="none") +
+    xlab("Month")+
+    ggtitle("Average monthly rainfall in 2011") +
+       facet_wrap(~city_name)
+```
+
+```{r heatmapdata}
+temperature_year <- temperature %>%
+  select(year, temp_type, city_name, temperature) %>%
+  filter(temp_type == "max") %>%
+  group_by(year,  city_name) %>% 
+  summarise(average_temp = mean(temperature,na.rm=T))
+```
+
+```{r heatmap}
+p3 <- ggplot(data=temperature_year, aes(x=year, y=city_name)) + 
+        geom_tile(aes(fill = average_temp),colour = "white") + 
+        scale_fill_gradientn(colours=rev(brewer.pal(20,'Spectral'))) + 
+      theme(legend.title=element_blank(),axis.title.y=element_blank(),axis.title.x=element_blank(),axis.text.x = element_text(angle=45, hjust=1), legend.position="top") +
+       ggtitle("Temperature (daily average)")
+
+ggplotly(p3)
+```
+
+```{r geomline}
+data_fire_Year_line <- nasa_fire %>% 
+  mutate(acq_date = as.POSIXct(acq_date)) %>% 
+  mutate(Year = year(acq_date), Month = month(acq_date)) %>% 
+  filter(Year > 2000) %>% 
+  mutate(Year = factor(Year)) %>%
+  group_by(Year,Month)%>% 
+  summarise(Total = n()) %>% 
+  mutate(time = paste0(Year, "-", Month, "-01"),
+         time = as.Date(time))
+
+
+rain_agv_line <- rainfall %>% 
+  filter(year > "2000") %>% 
+  group_by (year, month) %>% 
+  summarise(`Average rainfall`= mean(rainfall,na.rm=TRUE)) %>% 
+  arrange(-year) %>% 
+  mutate(time = paste0(year, "-", month, "-01"),
+         time = as.Date(time))
+
+temp_year_line <- temperature %>% 
+  filter(temp_type == "max") %>% 
+  filter(year > 2000) %>% 
+  group_by(year) %>% 
+  summarise(avg = mean(temperature,na.rm = TRUE)) %>% 
+  mutate(time = paste0(year, "-01-01"),
+         time = as.Date(time))
+
+
+fire_rain <- data_fire_Year_line %>% 
+  left_join(rain_agv_line, by = "time")
+
+fire_temp <- data_fire_Year_line %>% 
+  left_join(temp_year_line, by = "time") %>% 
+  drop_na()
+```
+
+```{r}
+temperatureColor <- "#69b3a2"
+priceColor <- rgb(0.2, 0.6, 0.9, 1)
+
+ggplot(fire_temp, aes(x=time, y=Total)) +
+  geom_line(color=temperatureColor) + 
+  geom_line(aes(y=avg), size=2, color=priceColor) +
+  scale_y_continuous(name = "Temperature",
+    sec.axis = sec_axis(~ ./10000, name="cases")) + 
+  theme_ipsum() +
+  theme(
+    axis.title.y = element_text(color = temperatureColor, size=13),
+    axis.title.y.right = element_text(color = priceColor, size=13)) +
+  ggtitle("Temperature down, price up")
+
+scl <- 1000
+ggplot(fire_temp, aes(x = time)) + 
+  geom_line(aes(y = Total/scl, colour = "Total")) + 
+  geom_line(aes(y = avg, colour = "Avg")) +
+  scale_y_continuous(sec.axis = sec_axis(~./scl, name = "Avg"))+ 
+  ggtitle("")
+```
+
+
+
+
+
+
+
+
+
+
+
+
 
 
