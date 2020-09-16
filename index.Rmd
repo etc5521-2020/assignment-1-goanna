@@ -41,21 +41,18 @@ library(hrbrthemes)
 library(dplyr)
 library(miceadds)
 library(plotly)
+library(ggrepel)
+library(scales)
 
 select <- dplyr::select
 ```
 
-<center>
-
-![](https://raw.githubusercontent.com/esharma3/project_australian_bushfires_webapp/master/static/images/readme_image.gif)
-
-[Soure: Bushfires ravaged Australia](https://raw.githubusercontent.com/esharma3/project_australian_bushfires_webapp/master/static/images/readme_image.gif)
-
-</center>
 
 # Introduction and motivation
+
 Bushfires that raged in Australia from September 2019 to early 2020 captured the attention of people worldwide, especially the out-of-control bushfires in Victoria and New South Wales(NSW). However, looking at the Australian bushfires' history data, we can find that Australia suffers from different degrees and quantities of bushfires every year. It is exciting to explore the link between Australian fire history and climate change. **What climatic conditions caused the frequent occurrence of the bushfires in Australia?**      
 In this analysis, R is the main tool for data cleaning and analysis.  
+
 The rest of the analysis proceeds as follows. Section \@ref(data) presents the data description. Section \@ref(analysis) details the findings in data analysis. The limitations of the analysis are presented in Section \@ref(limitation). Finally, Section \@ref(conclusion) provides the conclusions of this analysis.  
   
 ## Research questions
@@ -80,15 +77,15 @@ There are three data sets used on this analysis, and the cleaned data is obtaine
 
 nasa_fire <- load.Rdata2(filename = "nasa_fire.Rdata")
 
-
 temperature <- read.csv(here::here("data/2020-01-07/temperature_new.csv"))
 rainfall <- read.csv(here::here("data/2020-01-07/rainfall_new.csv"))
 ```
 
-## Australua fire data
+## Australia fire data
 
 The `fire` data source is from [NASA](https://firms.modaps.eosdis.nasa.gov/download/)[@nasa] "Active Fires Dataset" via the MODIS fire product collection. MODIS active fire product is detected the fire data in every 5 minutes and collected through each tile with horizontal and vertical coordinate.The data contains the fire information of Australia with `r nrow(nasa_fire)` observations from 2000-11-01 to 2020-01-05.   
-The variables information included in the data are as the following table, latitude, longitude and acq_date variables were mainly used for this analysis.    
+
+<!-- The variables information included in the data are as the following table, latitude, longitude and acq_date variables were mainly used for this analysis.     -->
 
 ```{r fire-data, warning=FALSE, message=FALSE}
 fire_data <- data.frame(
@@ -118,18 +115,19 @@ fire_data %>%
 ```
 
 
- 
 ## Climate data
 
 For climate data, temperature and rainfall was gathered from the Australian [Bureau of Meterology (BoM)](http://www.bom.gov.au/?ref=logo), of which is used the weather station to measure a variety of aspects of the weather.    
   
-The `Rainfall` data was sourced from six major Australian cities: Perth, Adelaide, Melbourne, Sydney,Brisbane and Canberra, and the cleaned data is obtained from [GitHub tidytuesday](https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-01-07/rainfall.csv), which is from 1858-01-01 to 2020-01-06, containing more than 230,000 observations. In order to maintain the complete information in six cities, we added some missing values for Brisbane and Canberra from the [source website](http://www.bom.gov.au/climate/data) and cleaned them to obtain the data from 1968-01-01 to 2017-12-31 in Canberra and from 1893-01-01 to 1998-12-31 in Brisbane. The new rainfall data is constructed by the old one and supplemental one and then become the final rainfall data set.   
+<!-- The `Rainfall` data was sourced from six major Australian cities: Perth, Adelaide, Melbourne, Sydney,Brisbane and Canberra, and the cleaned data is obtained from [GitHub tidytuesday](https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-01-07/rainfall.csv), which is from 1858-01-01 to 2020-01-06, containing more than 230,000 observations.  -->
+In order to maintain the complete information in six cities, we added some missing values for Brisbane and Canberra from the [source website](http://www.bom.gov.au/climate/data) and cleaned them to obtain the data from 1968-01-01 to 2017-12-31 in Canberra and from 1893-01-01 to 1998-12-31 in Brisbane. The new rainfall data is constructed by the old one and supplemental one and then become the final rainfall data set.   
   
-The `temperature` data is divided into two parts, with the cleaned data obtained directly from [GitHub tidytuesday](https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-01-07/temperature.csv), which is from 1910-01-01 to 2019-05-31. And we found the time range of the cleaned `temperature` data cannot match the `fire` data, in order to further analysis of the relationship between the fire and the temperature, we decided to download the new temperature data from the [source website](http://www.bom.gov.au/climate/data/index.shtml??zoom=1&lat=-26.9635&lon=133.4635&layers=B0000TFFFFFFFFFTFFFFFFFFFFFFFFFFTTT&dp=IDC10001&p_nccObsCode=201&p_display_type=dailyDataFile), and cleaned it to obtain the new data from 2019-06-01 to 2020-01-05. Finally, the new data were merge with the Github data to produce a final `temperature` data from 1910-01-01 to 2020-01-05, with more than 530,000 observations.    
+The `temperature` data is divided into two parts, with the cleaned data obtained directly from [GitHub tidytuesday](https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-01-07/temperature.csv), which is from 1910-01-01 to 2019-05-31. And we found the time range of the cleaned `temperature` data cannot match the `fire` data, in order to further analysis of the relationship between the fire and the temperature, we decided to download the new temperature data from the [source website](http://www.bom.gov.au/climate/data/index.shtml??zoom=1&lat=-26.9635&lon=133.4635&layers=B0000TFFFFFFFFFTFFFFFFFFFFFFFFFFTTT&dp=IDC10001&p_nccObsCode=201&p_display_type=dailyDataFile), and cleaned it to obtain the new data from 2019-06-01 to 2020-01-05. 
+<!-- Finally, the new data were merge with the Github data to produce a final `temperature` data from 1910-01-01 to 2020-01-05, with more than 530,000 observations.     -->
   
 Also, there are seven weather stations were chosen, based on seven Australian cities such as  Perth, Adelaide, Melbourne, Sydney, Brisbane, Port Lincoln and Canberra.   
   
-The climate data structure is shown as the below tables.In this analysis, date, temperature and temp_type variables for `temperature` data set were mainly used, and year, city_name and rainfall variables for `rainfall` data set as well.   
+The climate data structure is shown as the below tables. In this analysis, date, temperature and temp_type variables for `temperature` data set were mainly used, and year, city_name and rainfall variables for `rainfall` data set as well.   
 
 ```{r temp-data, warning=FALSE, message=FALSE}
 temperature_data <- tibble(Variable = c("city_name", "date", "temperature", "temp_type", "site_name"),
@@ -197,17 +195,42 @@ This section mainly introduces two main limitations of this analysis:
 
 ## Bushfires
 
-The Australian climate is generally hot and dry, bushfires can occur at anytime of the year for the most of regions[@bushfire]. However, are there more bushfires prefer happened in the summer or winter? Did bushfires more likely to occur in Northern Territory(NT)?  In this section, we will discuss it by analyzing the bushfire data for the past 20 years. 
+The Australian climate is generally hot and dry, bushfires can occur at anytime of the year for the most of regions[@bushfire]. However, are there more bushfires prefer happened in the summer or winter? 
+
+<!-- Did bushfires more likely to occur in Northern Territory(NT)?  KEEP IT AT THE LAST FOR SURPRISE -->
+
+In this section, we will discuss it by analyzing the bushfire data for the past 20 years. 
 
 ### In which months are bushfires burning? {#month}
 
-```{r when,fig.cap="The number of Australian fires in 12 month between 2001 and 2020", warning=FALSE, message=FALSE}
+```{r when,fig.cap="Yearly Australian fires from 2001 until 2020", warning=FALSE, message=FALSE}
+
+m <- factor(c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
+
 data_fire_Year <- nasa_fire %>% 
   mutate(acq_date = as.POSIXct(acq_date)) %>% 
   mutate(Year =year(acq_date),Month = month(acq_date)) %>% 
   mutate(Year = factor(Year)) %>% 
+  mutate(Month = case_when(Month == "1" ~ "Jan",
+                           Month == "2" ~ "Feb",
+                           Month == "3" ~ "Mar",
+                           Month == "4" ~ "Apr",
+                           Month == "5" ~ "May",
+                           Month == "6" ~ "Jun",
+                           Month == "7" ~ "Jul",
+                           Month == "8" ~ "Aug",
+                           Month == "9" ~ "Sep",
+                           Month == "10" ~ "Oct",
+                           Month == "11" ~ "Nov",
+                           Month == "12" ~ "Dec",
+                                                     )) %>% 
+  mutate(Month = factor(Month, levels = m)) %>% 
   group_by(Year,Month)%>% 
   summarise(Total = n()) 
+
+
+
+# m <- factor(c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"), levels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
 
 p1 <- data_fire_Year %>% 
   mutate( highlight=ifelse(Year=="2019", "2019", "Other")) %>% 
@@ -216,25 +239,25 @@ p1 <- data_fire_Year %>%
               group=Year, 
               color=highlight, 
               size=highlight)) +
-  scale_x_continuous(breaks = seq(1, 12, by = 1))+
+  # scale_x_continuous(breaks = seq(1, 12, by = 1))+
   geom_line()+
-  geom_label( x=4.5, y=2000, 
-              label="Other years,2001 to 2018", 
-              size=2, 
-              color="#69b3a2")+
-  geom_label( x=11.5, y=90000, 
-              label="2019", 
-              size=3, 
-              color="#69b3a2")+
-  geom_label( x=8.5, 
-              y=115000, 
-              label="2011", 
-              size=3, 
-              color="#69b3a2")+
-  scale_color_manual(values = c("#69b3a2", "grey")) +
+  # geom_label( x=4.5, y=2000, 
+  #             label="Other years,2001 to 2018", 
+  #             size=2, 
+  #             color="#69b3a2")+
+  # geom_label( x=11.5, y=90000, 
+  #             label="2019", 
+  #             size=3, 
+  #             color="#69b3a2")+
+  # geom_label( x=8.5, 
+  #             y=115000, 
+  #             label="2011", 
+  #             size=3, 
+  #             color="#69b3a2")+
+  scale_color_manual(values = c("red", "grey")) +
     scale_size_manual(values=c(1.5,0.2)) +
     theme(legend.position="none") +
-    ggtitle("The number of Australian bushfires in 12 month from 2001 to 2020") +
+    ggtitle("Yearly Australian fires from 2001 until 2020") +
     theme(axis.text.y = element_text(color = "grey", 
                                              face = "bold"),
         plot.title = element_text(face = "bold"),
@@ -243,37 +266,67 @@ p1 <- data_fire_Year %>%
  
 ggplotly(p1) 
 ```
+
 From Figure \@ref(fig:when), there are some unusual phenomena. 
-Firstly, we can see that the bushfires trend line in 2019 is quite different from other years, the main reason for that is the occurrence of extensive bushfires in Australia for 2019. And the bushfires from September 2019 is the most massive bushfire since European settlement[@nolan2020causes]. Moreover, there was a significant increase in the number of bushfires in September 2011, far more than in any other year in the same period. As @blanchi2014environmental states, the combination of low rainfalls and strong winds led to the outbreak of bushfires in 2011.  
+Firstly, we can see that the bushfires trend line in 2019 is quite different from other years. 
+
+>> When the trend in other years (i.e. 2011 and 2012) seems to reach a peak in August and October respectively, the trend of bushfire in 2019 is still growing until December 2019. Unfortunately, we do not have additional data to see the continuity of the 2019 trend line in 2020. 
+<!-- the main reason for that is the occurrence of extensive bushfires in Australia for 2019.  -->
+
+<!-- And the bushfires from September 2019 is the most massive bushfire since European settlement[@nolan2020causes].  -->
+
+>> According to the figure, the most severe bushfire occurs in 2011 with the number of spots reach 120.348 fire spots. We will look further into 2011 in the figure below.
+
+<!-- Moreover, there was a significant increase in the number of bushfires in September 2011, far more than in any other year in the same period.  -->
+
+<!-- <!-- As @blanchi2014environmental states, the combination of low rainfalls and strong winds led to the outbreak of bushfires in 2011.   --> -->
 
 ```{r average-rain, fig.cap ="Average monthly rainfall from 2001", warning=FALSE, message=FALSE}
 rain_agv <- rainfall %>% 
   filter(year == "2011") %>% 
+  mutate(month = case_when(month == "1" ~ "Jan",
+                           month == "2" ~ "Feb",
+                           month == "3" ~ "Mar",
+                           month == "4" ~ "Apr",
+                           month == "5" ~ "May",
+                           month == "6" ~ "Jun",
+                           month == "7" ~ "Jul",
+                           month == "8" ~ "Aug",
+                           month == "9" ~ "Sep",
+                           month == "10" ~ "Oct",
+                           month == "11" ~ "Nov",
+                           month == "12" ~ "Dec",
+                                                     )) %>% 
   group_by (month, city_name) %>% 
   summarise(`Average rainfall`= mean(rainfall,na.rm=TRUE)) %>% 
   arrange(`Average rainfall`)
-  
-rain_agv %>%
-  mutate(month=factor(month)) %>%
-  ggplot(aes(x=month, y=`Average rainfall`) ) +
-    geom_segment(aes(x=month ,xend= month, y=0, yend=`Average rainfall`), color="grey") +
+ 
+m <- factor(c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
+ 
+r_agv <- rain_agv %>%
+  mutate(month) %>%
+  ggplot(aes(x= factor(month, m), y=`Average rainfall`/100) ) +
+    # geom_segment(aes(x=month ,xend= month, y=0, yend=`Average rainfall`), color="grey") +
     geom_point(size=3, color="#69b3a2") +
-    theme_ipsum() +
-    theme(
-      panel.grid.minor.y = element_blank(),
-      panel.grid.major.y = element_blank(),
-      legend.position="none") +
+    # theme_ipsum() +
+    theme_bw()+
+    scale_y_continuous(labels= scales::percent)+
     xlab("Month")+
-    ggtitle("Average monthly rainfall in 2011") +
-    facet_wrap(~city_name) 
+  ylab("Average Rainfall")+
+    ggtitle("Monthly Rainfall in 2011") +
+    facet_wrap(~city_name, nrow = 3) 
 
+ggplotly(r_agv)
 ```
+
+As can be seen from figure \@ref(fig:average-rain), in 2011 (which is the worst year) 
+
 Also, it's interesting to find that bushfires are more likely to occur in May, and month from August to November, especially October. However, August to October is the winter to spring period in Australia. It seems that the frequent occurrence of bushfires during this period mainly due to dryness, which makes forest fuels more likely to catch fire[@sullivan2012fuel]. Moreover, comparing with Figure \@ref(fig:average-rain), it can be easy to find that the driest months are September, October and May, which coincided with the peak of the bushfires.   
 
 ### Where are the bushfires burning?
 
 In this part, we will focus on the relationship between bushfires and geographic locations. 
-Firstly, we divided fire data into different states or regions according to the latitude and longitude, because the data downloaded from NASA does not contain information for states or regions. Since the borders of NSW and Victoria are not easily distinguished, so we finally putting them together as one region.  
+Firstly, we divided bushfire data into different states or regions according to the latitude and longitude, because the data downloaded from NASA does not contain information for states or regions. Since the borders of NSW and Victoria are not easily distinguished, so we finally putting them together as one region.  
 
 ```{r state,fig.cap=" The number of bushfire in different states or regions in the past 20 years", warning=FALSE, message=FALSE}
 # divide regions
@@ -315,22 +368,34 @@ VIC_NSW  <- nasa_fire %>%
 state_fire <- bind_rows(WA_fire,NT_fire,SA_fire,VIC_NSW ,QLD_1,QLD_2) %>% 
   group_by (state,Year) %>% 
   summarise(Total= n())
-ggplot(state_fire,aes(x = Year,y = Total)) +
-  geom_col(fill = "#69b3a2")+
+
+national_avg <- sum(state_fire$Total)/nrow(state_fire)
+
+ggplot(state_fire, aes(x = Year,y = Total)) +
+  geom_col(fill = ifelse(state_fire$Year %in% c("2011", "2019"), "red", "grey"))+
   facet_wrap(~state)+
    theme(axis.text.y = element_text(color = "grey", 
          face = "bold"),
         plot.title = element_text(face = "bold"),
          plot.background = element_rect(fill="white"),
         panel.background = element_rect(fill="white"))+
-  ggtitle("The number of bushfire in different states or regions in the past 20 year")
+  geom_hline(yintercept = national_avg, linetype = "dashed", alpha = 0.5)+
+  ggtitle("Bushfire in States/Regions during 20 years")
+
+  ggplotly()
 
 ```
-Figure \@ref(fig:state) shows the most of bushfires happened in the Northern Territory(NT) and Queensland, probably because both areas are more likely prone to drought and they have more forests. As for VIC_NSW, the overall trend is relatively stable, but the number of fires in 2019 rose significantly. As mentioned in \@ref(month), there were massive bushfires in 2019. Figure \@ref(fig:map) shows the bushfires distribution from the end of December 2019 to the beginning of January 2020, and we can find that it is mainly concentrated in Victoria and NSW.  
-Based on the above analysis, we are more curious about what caused the bushfires in Australia. Are there any special climate conditions? We will elaborate on the story of climate conditions and bushfires in Section \@ref(temp) and \@ref(rain).
+
+Furthermore, we also draw a line that shows national average number of bushfires during 20 years period. Hence, we can see which states/territories that have more bushfires compared to national average. In addition, we are interested to see particular year of 2011 (the worst year) and 2019 (the different pattern).
+
+Figure \@ref(fig:state) shows us that, in general, bushfires are mostly occured in the Northern Territory(NT) and West Australia (WA), possibly because both areas are more likely prone to drought (we will check this assumption in the following section) and they also have large forests area (according to Australia's Department of Agriculture)[https://www.agriculture.gov.au/abares/forestsaustralia/australias-forests#:~:text=%E2%80%8BQueensland%20has%20the%20largest,up%20much%20of%20the%20balance]. 
+
+In 2011, NT has very high number of bushfires compared to other states. However, latest massive bushfires in 2019 is mostly occured in area comprises of Victoria and New South Wales. Figure \@ref(fig:map) shows fire spots from the latest bushfires (December 2019 to early January 2020), and we can find that it is mainly concentrated in Victoria and NSW.  
+
+Based on the analysis, we will look at the causes of bushfires in Australia. Are there association between climate conditions to the bushfire? We will explore the story of climate conditions (temperature and rainfall level) in section \@ref(temp) and \@ref(rain).
 
 
-```{r map, message = FALSE, fig.cap="The distribution point for Australian bushfires from 2019-12-29 to 2020-01-05(the darker the color, the more serious the fire)", fig.align='center'}
+```{r map, message = FALSE, fig.cap="The Fire Spots during 2019-12-29 until 2020-01-05(the darker the color, the more serious the fire)", fig.align='center'}
 subset <- nasa_fire %>% 
   filter(acq_date >= "2019-12-29" & acq_date <= "2020-01-05")
 
@@ -353,7 +418,7 @@ leaflet(data = subset) %>%
 
 ### Positive association with temperature and bushfires {#temp}
 
-Were bushfires more likely to happen with higher temperatures in Australia? In this section, we will explore the relationship between the two in-depth.   
+This section will be focus on finding clues to answer research question of whether higher temperature contributes to the occurrences of bushfires.   
 
 ```{r temp}
 temperature <- temperature %>% 
@@ -374,6 +439,8 @@ temp_year <- temperature %>%
 ```{r temp-yearly-plot,message=FALSE, warning=FALSE, fig.cap="Annual average temperature trends from 1910 to 2019, calculated by daily maximum temperature", fig.align='center'}
 # prepare time series data
 temp_year_dat <- xts(x = temp_year$avg, order.by = temp_year$time)
+
+
 
 # time series plot
 dygraph(temp_year_dat) %>%
@@ -427,56 +494,19 @@ themes_p <- theme(axis.title.x=element_blank(),
                   panel.background = element_rect(fill="white"))
 ```
 
-```{r temp-diff, message=FALSE,warning=FALSE, fig.cap="The plot for the difference between the average temperature of 1961-1990(as baseline) and the annual average temperature for each year from 1910 to 2019, calculated by daily maximum temperature", warning=FALSE, message=FALSE}
-# temperature difference data
-temp_diff <- temperature %>%
-  filter(temp_type == "max") %>% 
-  filter(year <= 2019) %>% 
-  group_by(year) %>% 
-  summarise(avg = mean(temperature,na.rm = TRUE)) %>% 
-  mutate(diff = (avg - meanTemp$avg),
-         diff = round(diff,2))
-
-temp_diff$ismax <- with(temp_diff, ave(diff, FUN=function(x) x==max(x)))
-
-# plot difference
-temp_diff %>% 
-  ggplot(aes(year, diff, fill=as.factor(ismax))) + 
-  geom_bar(stat="identity") +
-  scale_y_continuous(breaks = seq(-1.5,1.5,0.5))+
-  scale_fill_manual(breaks=c("0","1"), 
-                    values=c("#C7C7C7","#F08080"), 
-                    guide="none")+
-  geom_hline(yintercept = 0, color = "#9C9C9C")+
-  annotate(geom="text", 
-           x=1930, y=0.8, 
-           label="Annual temperature's difference \n with the 1961–1990 average",
-           color="grey", 
-           size = 3)+
-  annotate(geom="text", 
-           x=1917, y=1.5, 
-           label="above than average(°C)",
-           color="grey", 
-           size = 3)+
-  annotate(geom = "text",
-           x=2019,y=1.8,
-           label="2019",
-           size = 3)+
-  annotate(geom = "text",
-           x=1917,y=-1.9,
-           label="1917",
-           size = 3)+
-  annotate(geom = "text",
-           x=1972,y=0.5,
-           label="1970",
-           size = 3)+
-  ggtitle("The annual temperature difference in Australia from 1910 to 2019")+
-  themes_p
-
-```
-
 ```{r fire-year-sum, warning=FALSE, message=FALSE}
 # calculate annual mean temperature
+nasa_fire.month <- nasa_fire %>% 
+  mutate(month = month(acq_date), year = year(acq_date)) %>% 
+  group_by(year, month) %>% 
+  summarise(n = n())
+
+# Rescale avg_rain to create log10 and sqrt average fire to compare with annual temperature
+avg_fire <- nasa_fire.month %>% 
+  group_by(year) %>% 
+  summarise(avg = mean(n)) %>% 
+  mutate(log_sqrt_avg = log10(sqrt(avg)))
+
 sum_fire <- nasa_fire %>% 
   mutate(year = year(acq_date)) %>% 
   filter(year > 2000 & year <= 2019) %>% 
@@ -485,6 +515,98 @@ sum_fire <- nasa_fire %>%
   mutate(time = paste0(year, "-01-01"),
          time = as.Date(time)) 
 ```
+
+```{r temp-diff, message=FALSE,warning=FALSE, fig.cap="The plot for the difference between the average temperature of 1961-1990(as baseline) and the annual average temperature for each year from 1910 to 2019, calculated by daily maximum temperature", warning=FALSE, message=FALSE}
+# temperature difference data
+# temp_diff <- temperature %>%
+#   filter(temp_type == "max") %>% 
+#   filter(year <= 2019 & year >= 2000) %>% 
+#   group_by(year) %>% 
+#   summarise(avg = mean(temperature,na.rm = TRUE)) %>% 
+#   mutate(diff = (avg - meanTemp$avg),
+#          diff = round(diff,2))
+# 
+# temp_diff$ismax <- with(temp_diff, ave(diff, FUN=function(x) x==max(x)))
+# 
+# # plot difference
+# temp_diff %>% 
+#   filter(year >= 2000) %>% 
+#   ggplot(aes(year, diff, fill=as.factor(ismax))) + 
+#   geom_bar(stat="identity") +
+#   scale_y_continuous(breaks = seq(-1.5,1.5,0.5))+
+#   scale_fill_manual(breaks=c("0","1"), 
+#                     values=c("#C7C7C7","#F08080"), 
+#                     guide="none")+
+#   geom_hline(yintercept = 0, color = "#9C9C9C")+
+#   annotate(geom="text", 
+#            x=1930, y=0.8, 
+#            label="Annual temperature's difference \n with the 1961–1990 average",
+#            color="grey", 
+#            size = 3)+
+#   annotate(geom="text", 
+#            x=1917, y=1.5, 
+#            label="above than average(°C)",
+#            color="grey", 
+#            size = 3)+
+#   annotate(geom = "text",
+#            x=2019,y=1.8,
+#            label="2019",
+#            size = 3)+
+#   annotate(geom = "text",
+#            x=1917,y=-1.9,
+#            label="1917",
+#            size = 3)+
+#   annotate(geom = "text",
+#            x=1972,y=0.5,
+#            label="1970",
+#            size = 3)+
+#   ggtitle("The annual temperature difference in Australia from 1910 to 2019")+
+#   themes_p
+
+mean_fire <- mean(sum_fire$n)
+
+bushfire_avg <- sum_fire %>% 
+  mutate(avg_fire = as.numeric(lapply(mean_fire, rep))) %>% 
+  mutate(diff_fire = avg_fire - n,
+         diff_fire = round(diff_fire,2))
+
+# Temp diffences from 2000-2020
+temp_diff <- temperature %>%
+  filter(temp_type == "max") %>% 
+  filter(year <= 2019 & year >= 2000) %>% 
+  group_by(year) %>% 
+  summarise(avg = mean(temperature,na.rm = TRUE)) %>% 
+  mutate(diff = (avg - meanTemp$avg),
+         diff = round(diff,2))
+
+temp_diff$ismax <- with(temp_diff, ave(diff, FUN=function(x) x==max(x)))
+
+# join temp with fire
+temp_fire <- left_join(temp_diff, avg_fire, by = "year")
+
+# plot difference
+temp_vs_fire <- temp_fire %>% 
+  filter(year >= 2000) %>% 
+  ggplot(aes(x = year)) + 
+  geom_bar(aes(y = diff), stat="identity", alpha = 0.4) +
+  geom_line(aes(y = diff), color = "blue", size = 1.1)+
+  geom_text(aes(y = log_sqrt_avg, label = ifelse(year == 2012, "Monthly Average BushFires (scaled down)", "")), cex = 3, nudge_x = -1, nudge_y = 0.25,)+ 
+  geom_line(aes(y = log_sqrt_avg), color = "red", size = 1.1)+
+  scale_y_continuous(breaks = seq(-1.5,1.5,0.5))+
+  scale_fill_manual(breaks=c("0","1"), 
+                    values=c("#C7C7C7","#F08080"), 
+                    guide="none")+
+  geom_hline(yintercept = 0, color = "#9C9C9C")+
+  geom_vline(xintercept = 2011, linetype = "dashed", alpha = 0.5)+
+  geom_vline(xintercept = 2019, linetype = "dashed", alpha = 0.5)+
+  ylab("Temperature Differences (celcius)")+
+  ggtitle("Average Temperature Difference vs Bushfires")
+
+ggplotly(temp_vs_fire)
+
+```
+
+
 
 ```{r fire-yearly-plot, fig.cap="Annual total fires trends from 2001 to 2019", fig.align='center'}
 # prepare time series data
@@ -567,12 +689,12 @@ From Figure \@ref(fig:rain-diff-annual), the annual average rainfall changed cro
 #the annual rainfall baseline selected by the Australian BOM from 1961 to 1990
 rainmean<-rain%>%
   select(year,rainfall)%>%
-  filter(year>=1970&year<=1990)%>%
+  filter(year>=1970 & year<=1990)%>%
   group_by(year)%>%
- summarise(avg=sum(rainfall))
+ summarise(avg = mean(rainfall))
 
-rainmean<-rainmean%>%
-  mutate(baseline=sum(avg)/120)
+rainmean <- rainmean%>%
+  mutate(baseline= mean(avg))
   
 ```
 
@@ -580,50 +702,61 @@ rainmean<-rainmean%>%
 #277.6 is the annual rainfall baseline selected by the Australian BOM from 1961 to 1990
 rain_diff <- rain %>%
   select(year,rainfall)%>%
+  filter(year >= 2000) %>% 
   group_by(year) %>% 
-  summarise(avg = sum(rainfall)/6)%>%
-  mutate(diff = (avg - rainmean$baseline ),
+  summarise(avg = mean(rainfall))%>%
+  mutate(baseline = as.numeric(lapply(rainmean$baseline[1], rep))) %>% 
+  mutate(diff = avg - baseline,
          diff = round(diff,2))
 ```
 
 ```{r rain-diff-annual,fig.cap="Annual rainfall difference"}
 rain_diff$ismax <- with(rain_diff, ave(year, FUN=function(x) x==max(x)))
 
-ggplot(rain_diff,aes(x=year, y=diff,fill=as.factor(ismax))) + 
-  geom_bar(stat = "identity")+
-  scale_fill_manual(breaks=c("0","1"), values=c("#C7C7C7","#F08080"), guide="none")+
-   geom_hline(yintercept = 0, color = "#9C9C9C")+
-  scale_y_continuous(breaks = seq(-400,400,100))+
-  annotate(geom="text", 
-           x=1985, y=230, 
-           label="Annual rainfall difference \n with the 1961–1990 average",
-           color="grey", 
-           size = 3)+
-  annotate(geom="text", 
-           x=1975, y=300, 
-           label="above than millimeters(mm)",
-           color="grey", 
-           size = 3)+
-  annotate(geom = "text",
-           x=2019,y=-300,
-           label="2019",
-           size = 3)+
-  annotate(geom = "text",
-           x=1994,y=-380,
-           label="1994",
-           size = 3)+
-   annotate(geom = "text",
-           x=2000,y=-220,
-           label="2000",
-           size = 3)+
-  annotate(geom = "text",
-           x=2010,y=100,
-           label="2010",
-           size = 3)+
-  ylab("rainfall")+
-  ggtitle("The annual rainfall difference in Australia from 1970 to 2019")+
-  themes_p
+rain_vs_fire <- left_join(rain_diff, avg_fire, by = "year") %>% 
+  mutate(log_avg = log10(avg.y)+4)
 
+ggplot(rain_vs_fire, aes(x = year)) + 
+  geom_bar(aes(y = avg.x), stat = "identity", alpha = 0.4) +
+  # scale_fill_manual(breaks=c("0","1"), values=c("#C7C7C7","#F08080"), guide="none")+
+   geom_hline(yintercept = 0, color = "#9C9C9C")+
+  # scale_y_continuous(breaks = seq(-400,400,100))+
+  geom_line(aes(y = avg.x), color = "blue", size = 1.1)+
+  geom_text(aes(y = log_avg, label = ifelse(year == 2012, "Monthly Average BushFires (scaled down)", "")), cex = 3, nudge_y = 0.25)+ 
+  geom_line(aes(y = log_avg), color = "red", size = 1.1)+
+  # annotate(geom="text", 
+  #          x=1985, y=230, 
+  #          label="Annual rainfall difference \n with the 1961–1990 average",
+  #          color="grey", 
+  #          size = 3)+
+  # annotate(geom="text", 
+  #          x=1975, y=300, 
+  #          label="above than millimeters(mm)",
+  #          color="grey", 
+  #          size = 3)+
+  # annotate(geom = "text",
+  #          x=2019,y=-300,
+  #          label="2019",
+  #          size = 3)+
+  # annotate(geom = "text",
+  #          x=1994,y=-380,
+  #          label="1994",
+  #          size = 3)+
+  #  annotate(geom = "text",
+  #          x=2000,y=-220,
+  #          label="2000",
+  #          size = 3)+
+  # annotate(geom = "text",
+  #          x=2010,y=100,
+  #          label="2010",
+  #          size = 3)+
+  ylab("Rainfall (mm)")+
+  geom_vline(xintercept = 2011, linetype = "dashed")+
+  geom_vline(xintercept = 2019, linetype = "dashed")+
+  ggtitle("The Average Rainfall vs Bushfire")
+
+
+ggplotly()
 ```
 
 From the above analysis, we can make some insights that the low rainfall in 2019 is closely related to bushfires.   
