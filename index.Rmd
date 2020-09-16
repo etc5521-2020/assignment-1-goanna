@@ -702,19 +702,8 @@ The authors would like to thank all the contributors to the following R package:
 # References
 
 # Year section
-```{r}
-data_fire_Year  %>%
-  ggplot(aes(x = Month, y = Total)) +
-  geom_line() +
-  geom_text(aes(label = Total_fire), color = "red", vjust = 1.5) +
-  xlab("Year") +
-  ylab("Number of Fires") +
-  ggtitle("Number of Fires by Year") 
-```
 
-
-
-```{r rainboxplot, fig.cap ="Average monthly rainfall from 2001", warning=FALSE, message=FALSE}
+```{r rainjitterplot, fig.cap ="Average monthly rainfall from 2001", warning=FALSE, message=FALSE}
 rain_jitter <- rainfall %>% 
   filter(year == "2011") %>% 
   select(city_name, year, month, day, rainfall)
@@ -789,26 +778,18 @@ fire_temp <- data_fire_Year_line %>%
 ```
 
 ```{r}
-temperatureColor <- "#69b3a2"
-priceColor <- rgb(0.2, 0.6, 0.9, 1)
-
-ggplot(fire_temp, aes(x=time, y=Total)) +
-  geom_line(color=temperatureColor) + 
-  geom_line(aes(y=avg), size=2, color=priceColor) +
-  scale_y_continuous(name = "Temperature",
-    sec.axis = sec_axis(~ ./10000, name="cases")) + 
-  theme_ipsum() +
-  theme(
-    axis.title.y = element_text(color = temperatureColor, size=13),
-    axis.title.y.right = element_text(color = priceColor, size=13)) +
-  ggtitle("Temperature down, price up")
-
 scl <- 1000
-ggplot(fire_temp, aes(x = time)) + 
+p4 <- ggplot(fire_temp, aes(x = time)) + 
   geom_line(aes(y = Total/scl, colour = "Total")) + 
   geom_line(aes(y = avg, colour = "Avg")) +
   scale_y_continuous(sec.axis = sec_axis(~./scl, name = "Avg"))+ 
-  ggtitle("")
+  ggtitle("") +
+  theme_bw() +
+  theme(axis.text.y = element_text(color = "grey", face = "bold"),
+  plot.title = element_text(face = "bold"),
+  plot.background = element_rect(fill="white"))
+
+ggplotly(p4)
 ```
 
 
