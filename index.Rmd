@@ -310,10 +310,9 @@ r_agv <- rain_agv %>%
     geom_point(size=3, color="#69b3a2") +
     # theme_ipsum() +
     theme_bw()+
-    scale_y_continuous(labels= scales::percent)+
     xlab("")+
   ylab("")+
-    ggtitle("Average Monthly Rainfall in 2011") +
+    ggtitle("Average Monthly Rainfall (in Mm) in 2011") +
     facet_wrap(~city_name, nrow = 3) 
 
 ggplotly(r_agv)
