@@ -3,7 +3,7 @@ title: "ETC5521 Assignment 1"
 subtitle: "Australian bushfires: The effect of climatic condition"
 team: goanna
 author:
-  - 
+  - Chengzhi Ye
   - Emily Sheehan
   - Dea Avega Editya
 bibliography: references.bib
@@ -47,14 +47,6 @@ library(dichromat)
 
 select <- dplyr::select
 ```
-
-<center>
-
-![](https://raw.githubusercontent.com/esharma3/project_australian_bushfires_webapp/master/static/images/readme_image.gif)
-
-[Soure: Bushfires ravaged Australia](https://raw.githubusercontent.com/esharma3/project_australian_bushfires_webapp/master/static/images/readme_image.gif)
-
-</center>
 
 # Introduction and motivation
 
@@ -209,35 +201,228 @@ The rainfall and temperature data has been recorded for some major cities, and t
 
 ### Where does rainfall occur the most in Australia? 
 
-```{r average-rain, fig.cap ="Average monthly rainfall from 2001", warning=FALSE, message=FALSE}
-rain_agv <- rainfall %>% 
-  filter(year == "2011") %>% 
-  group_by (month, city_name) %>% 
-  summarise(`Average rainfall`= mean(rainfall,na.rm=TRUE)) %>% 
-  arrange(`Average rainfall`)
+```{r rainjitterplot, fig.cap ="Average monthly rainfall for 2019", warning=FALSE, message=FALSE}
+rain_jitter <- rainfall %>% 
+  filter(year == "2019") %>% 
+  select(city_name, year, month, day, rainfall)
   
-rain_agv %>%
-  mutate(month=factor(month)) %>%
-  ggplot(aes(x=month, y=`Average rainfall`) ) +
-    geom_segment(aes(x=month ,xend= month, y=0, yend=`Average rainfall`), color="grey") +
-    geom_point(size=3, color="#69b3a2") +
-    theme_ipsum() +
+ggplot(data = rain_jitter,
+       aes(x = factor(month),y = rainfall,color = rainfall)) + 
+       scale_color_gradientn(colours=rev(brewer.pal(10,'Spectral'))) + 
+       geom_jitter(shape=16,position=position_jitter(0.2),size=1.8) + 
+       theme_ipsum() +
     theme(
       panel.grid.minor.y = element_blank(),
       panel.grid.major.y = element_blank(),
       legend.position="none") +
     xlab("Month")+
-    ggtitle("Average monthly rainfall in 2011") +
-    facet_wrap(~city_name) 
-
+    ggtitle("Average monthly rainfall in 2019") +
+       facet_wrap(~city_name)
 ```
+
 
 Figure \@ref(fig:average-rain) finds that the driest months are September, October and May for Australia???
 
 ### Where is the hottest climate in Australia?
 
+```{r temp}
+temperature <- temperature %>% 
+  mutate(year = year(date)) 
+```
+
+```{r heatmapdata}
+temperature_year <- temperature %>%
+  select(year, temp_type, city_name, temperature) %>%
+  filter(temp_type == "max") %>%
+  group_by(year,  city_name) %>% 
+  summarise(average_temp = mean(temperature,na.rm=T))
+```
+
+```{r heatmap}
+ggplot(data=temperature_year, aes(x=year, y=city_name)) + 
+        geom_tile(aes(fill = average_temp),colour = "white") + 
+        scale_fill_gradientn(colours=rev(brewer.pal(20,'Spectral'))) + 
+      theme(legend.title=element_blank(),axis.title.y=element_blank(),axis.title.x=element_blank(),axis.text.x = element_text(angle=45, hjust=1), legend.position="top") +
+       ggtitle("Temperature (daily average)")
+
+```
 
 ### How has climate change impacted weather patterns in Australia?
+
+```{r temp-yearly, warning=FALSE, message=FALSE}
+# calculate annual mean temperature
+temp_year <- temperature %>% 
+  filter(temp_type == "max") %>% 
+  filter(year <= 2019) %>% 
+  group_by(year) %>% 
+  summarise(avg = mean(temperature,na.rm = TRUE)) %>% 
+  mutate(time = paste0(year, "-01-01"),
+         time = as.Date(time)) 
+
+```
+
+
+```{r temp-yearly-plot,message=FALSE, warning=FALSE, fig.cap="Annual average temperature trends from 1910 to 2019, calculated by daily maximum temperature", fig.align='center'}
+# prepare time series data
+temp_year_dat <- xts(x = temp_year$avg, order.by = temp_year$time)
+
+# time series plot
+dygraph(temp_year_dat) %>%
+  dyOptions(labelsUTC = TRUE, 
+            fillGraph=TRUE, 
+            fillAlpha=0.15, 
+            drawGrid = FALSE, 
+            colors="#EED5D2") %>%
+  dyRangeSelector(dateWindow = c("2000-01-01", "2019-01-01"),
+                  height = 50,
+                  fillColor = "#BFEFFF",) %>%
+  dyCrosshair(direction = "vertical") %>%
+  dyHighlight(highlightCircleSize = 5, 
+              highlightSeriesBackgroundAlpha = 0.1, 
+              hideOnMouseOut = FALSE)  %>%
+  dyRoller(rollPeriod = 1) %>% 
+  dySeries("V1", label = "Average temperature(°C)")
+
+```
+
+```{r baseline}
+# mean temperature from 1961 to 1990, follow the baseline selected by the Australian BOM
+meanTemp <- temperature %>% 
+  filter(temp_type == "max") %>% 
+  filter(year >= 1961 & year <= 1990) %>% 
+  summarise(avg = mean(temperature, na.rm = TRUE))
+```
+
+```{r themes}
+# combine themes
+themes_p <- theme(axis.title.x=element_blank(),
+                  axis.title.y=element_blank(),
+                  axis.ticks=element_blank(),
+                  axis.text.x = element_blank(),
+                  axis.text.y = element_text(color = "grey", 
+                                             face = "bold"),
+                  plot.title = element_text(face = "bold"),
+                  plot.background = element_rect(fill="white"),
+                  panel.background = element_rect(fill="white"))
+```
+
+```{r temp-diff, message=FALSE,warning=FALSE, fig.cap="The plot for the difference between the average temperature of 1961-1990(as baseline) and the annual average temperature for each year from 1910 to 2019, calculated by daily maximum temperature", warning=FALSE, message=FALSE}
+# temperature difference data
+temp_diff <- temperature %>%
+  filter(temp_type == "max") %>% 
+  filter(year <= 2019) %>% 
+  group_by(year) %>% 
+  summarise(avg = mean(temperature,na.rm = TRUE)) %>% 
+  mutate(diff = (avg - meanTemp$avg),
+         diff = round(diff,2))
+
+temp_diff$ismax <- with(temp_diff, ave(diff, FUN=function(x) x==max(x)))
+
+# plot difference
+temp_diff %>% 
+  ggplot(aes(year, diff, fill=as.factor(ismax))) + 
+  geom_bar(stat="identity") +
+  scale_y_continuous(breaks = seq(-1.5,1.5,0.5))+
+  scale_fill_manual(breaks=c("0","1"), 
+                    values=c("#C7C7C7","#F08080"), 
+                    guide="none")+
+  geom_hline(yintercept = 0, color = "#9C9C9C")+
+  annotate(geom="text", 
+           x=1930, y=0.8, 
+           label="Annual temperature's difference \n with the 1961–1990 average",
+           color="grey", 
+           size = 3)+
+  annotate(geom="text", 
+           x=1917, y=1.5, 
+           label="above than average(°C)",
+           color="grey", 
+           size = 3)+
+  annotate(geom = "text",
+           x=2019,y=1.8,
+           label="2019",
+           size = 3)+
+  annotate(geom = "text",
+           x=1917,y=-1.9,
+           label="1917",
+           size = 3)+
+  annotate(geom = "text",
+           x=1972,y=0.5,
+           label="1970",
+           size = 3)+
+  ggtitle("The annual temperature difference in Australia from 1910 to 2019")+
+  themes_p
+
+```
+
+ 
+```{r baseline-rain, warning=FALSE, message=FALSE}
+#the annual rainfall baseline selected by the Australian BOM from 1961 to 1990
+rain<-rainfall%>%
+ drop_na()%>%
+  select(station_code,year,rainfall,city_name)%>%
+  filter(station_code %in% c("9151","23001","40913","66062","70351","86232"))%>%
+  filter(year>=1970&year<=2019)
+
+rainmean<-rain%>%
+  select(year,rainfall)%>%
+  filter(year>=1970&year<=1990)%>%
+  group_by(year)%>%
+ summarise(avg=sum(rainfall))
+
+rainmean<-rainmean%>%
+  mutate(baseline=sum(avg)/120)
+  
+```
+
+```{r rainfall-diff, warning=FALSE, message=FALSE}
+#277.6 is the annual rainfall baseline selected by the Australian BOM from 1961 to 1990
+rain_diff <- rain %>%
+  select(year,rainfall)%>%
+  group_by(year) %>% 
+  summarise(avg = sum(rainfall)/6)%>%
+  mutate(diff = (avg - rainmean$baseline ),
+         diff = round(diff,2))
+```
+
+```{r rain-diff-annual,fig.cap="Annual rainfall difference"}
+rain_diff$ismax <- with(rain_diff, ave(year, FUN=function(x) x==max(x)))
+
+ggplot(rain_diff,aes(x=year, y=diff,fill=as.factor(ismax))) + 
+  geom_bar(stat = "identity")+
+  scale_fill_manual(breaks=c("0","1"), values=c("#C7C7C7","#F08080"), guide="none")+
+   geom_hline(yintercept = 0, color = "#9C9C9C")+
+  scale_y_continuous(breaks = seq(-400,400,100))+
+  annotate(geom="text", 
+           x=1985, y=230, 
+           label="Annual rainfall difference \n with the 1961–1990 average",
+           color="grey", 
+           size = 3)+
+  annotate(geom="text", 
+           x=1975, y=300, 
+           label="above than millimeters(mm)",
+           color="grey", 
+           size = 3)+
+  annotate(geom = "text",
+           x=2019,y=-300,
+           label="2019",
+           size = 3)+
+  annotate(geom = "text",
+           x=1994,y=-380,
+           label="1994",
+           size = 3)+
+   annotate(geom = "text",
+           x=2000,y=-220,
+           label="2000",
+           size = 3)+
+  annotate(geom = "text",
+           x=2010,y=100,
+           label="2010",
+           size = 3)+
+  ylab("rainfall")+
+  ggtitle("The annual rainfall difference in Australia from 1970 to 2019")+
+  themes_p
+
+```
 
 ## Bushfires
 
@@ -292,29 +477,6 @@ ggplotly(p1)
 Figure \@ref(fig:when) shows some unusual patterns. The trend line for the bushfires in 2019 is very different from other years. This is due to the extensive bushfires in Victoria and New South Wales, which were the biggest bushfires since the European settlement [@nolan2020causes].
  
 In September 2011, there was far more bushfires than in any other year in the same period. According to @blanchi2014environmental, these bushfires were the result of a combination of low rainfall and strong winds. 
-
-```{r average-rain, fig.cap ="Average monthly rainfall from 2001", warning=FALSE, message=FALSE}
-rain_agv <- rainfall %>% 
-  filter(year == "2011") %>% 
-  group_by (month, city_name) %>% 
-  summarise(`Average rainfall`= mean(rainfall,na.rm=TRUE)) %>% 
-  arrange(`Average rainfall`)
-  
-rain_agv %>%
-  mutate(month=factor(month)) %>%
-  ggplot(aes(x=month, y=`Average rainfall`) ) +
-    geom_segment(aes(x=month ,xend= month, y=0, yend=`Average rainfall`), color="grey") +
-    geom_point(size=3, color="#69b3a2") +
-    theme_ipsum() +
-    theme(
-      panel.grid.minor.y = element_blank(),
-      panel.grid.major.y = element_blank(),
-      legend.position="none") +
-    xlab("Month")+
-    ggtitle("Average monthly rainfall in 2011") +
-    facet_wrap(~city_name) 
-
-```
 
 The overall trend line shows that bushfires are more likely to occur from August to November. This is the winter-spring period in Australia. These months are typically drier as seen in Figure \@ref(fig:average-rain)??(I THINK WE ALSO NEED A GRAPH FOR OVERALL AV RAINFALL TO LINK HERE), which can lead to the ignition of forest fuels [@sullivan2012fuel] and thus bushfires.  
 
@@ -400,45 +562,58 @@ leaflet(data = subset) %>%
 
 ### Positive association with temperature and bushfires {#temp}
 
-```{r temp}
-temperature <- temperature %>% 
-  mutate(year = year(date)) 
-```
+```{r geomline}
+data_fire_Year_line <- nasa_fire %>% 
+  mutate(acq_date = as.POSIXct(acq_date)) %>% 
+  mutate(Year = year(acq_date), Month = month(acq_date)) %>% 
+  filter(Year > 2000) %>% 
+  mutate(Year = factor(Year)) %>%
+  group_by(Year,Month)%>% 
+  summarise(Total = n()) %>% 
+  mutate(time = paste0(Year, "-", Month, "-01"),
+         time = as.Date(time))
 
-```{r temp-yearly, warning=FALSE, message=FALSE}
-# calculate annual mean temperature
-temp_year <- temperature %>% 
+
+rain_agv_line <- rainfall %>% 
+  filter(year > "2000") %>% 
+  group_by (year, month) %>% 
+  summarise(`Average rainfall`= mean(rainfall,na.rm=TRUE)) %>% 
+  arrange(-year) %>% 
+  mutate(time = paste0(year, "-", month, "-01"),
+         time = as.Date(time))
+
+temp_year_line <- temperature %>% 
   filter(temp_type == "max") %>% 
-  filter(year <= 2019) %>% 
+  filter(year > 2000) %>% 
   group_by(year) %>% 
   summarise(avg = mean(temperature,na.rm = TRUE)) %>% 
   mutate(time = paste0(year, "-01-01"),
-         time = as.Date(time)) 
+         time = as.Date(time))
 
+
+fire_rain <- data_fire_Year_line %>% 
+  left_join(rain_agv_line, by = "time")
+
+fire_temp <- data_fire_Year_line %>% 
+  left_join(temp_year_line, by = "time") %>% 
+  drop_na()
 ```
 
 
-```{r temp-yearly-plot,message=FALSE, warning=FALSE, fig.cap="Annual average temperature trends from 1910 to 2019, calculated by daily maximum temperature", fig.align='center'}
-# prepare time series data
-temp_year_dat <- xts(x = temp_year$avg, order.by = temp_year$time)
 
-# time series plot
-dygraph(temp_year_dat) %>%
-  dyOptions(labelsUTC = TRUE, 
-            fillGraph=TRUE, 
-            fillAlpha=0.15, 
-            drawGrid = FALSE, 
-            colors="#EED5D2") %>%
-  dyRangeSelector(dateWindow = c("2000-01-01", "2019-01-01"),
-                  height = 50,
-                  fillColor = "#BFEFFF",) %>%
-  dyCrosshair(direction = "vertical") %>%
-  dyHighlight(highlightCircleSize = 5, 
-              highlightSeriesBackgroundAlpha = 0.1, 
-              hideOnMouseOut = FALSE)  %>%
-  dyRoller(rollPeriod = 1) %>% 
-  dySeries("V1", label = "Average temperature(°C)")
+```{r, fig.cap="The Trend of Temperature and Bushfires"}
+scl <- 1000
+p4 <- ggplot(fire_temp, aes(x = time)) + 
+  geom_line(aes(y = Total/scl, colour = "Total_Bushfires")) + 
+  geom_line(aes(y = avg, colour = "Avg_Temperature")) +
+  scale_y_continuous(sec.axis = sec_axis(~./scl, name = "Avg"))+ 
+  ggtitle("The Trend of Temperature and Bushfires") +
+  theme_bw() +
+  theme(axis.text.y = element_text(color = "grey", face = "bold"),
+  plot.title = element_text(face = "bold"),
+  plot.background = element_rect(fill="white"))
 
+ggplotly(p4)
 ```
 
 Figure \@ref(fig:temp-yearly-plot) shows the average temperature in 2019 is significantly higher than other years. A strong positive Indian Ocean Dipole (IOD) phenomenon was the culprit[@harris2019understanding], and contributed to very high temperatures and low rainfall across Australia[@bureau2019annual], beginning in May 2019 and lasting until the end of the year.   
@@ -455,109 +630,6 @@ Moreover, it is worth noting that 2019 is significantly higher than in other yea
 
 Evidently, the rising annual temperature has been a warning that Global warming is a growing problem. Ultimately, global warming leads to many natural disasters, bushfires included. 
 
-```{r baseline}
-# mean temperature from 1961 to 1990, follow the baseline selected by the Australian BOM
-meanTemp <- temperature %>% 
-  filter(temp_type == "max") %>% 
-  filter(year >= 1961 & year <= 1990) %>% 
-  summarise(avg = mean(temperature, na.rm = TRUE))
-```
-
-```{r themes}
-# combine themes
-themes_p <- theme(axis.title.x=element_blank(),
-                  axis.title.y=element_blank(),
-                  axis.ticks=element_blank(),
-                  axis.text.x = element_blank(),
-                  axis.text.y = element_text(color = "grey", 
-                                             face = "bold"),
-                  plot.title = element_text(face = "bold"),
-                  plot.background = element_rect(fill="white"),
-                  panel.background = element_rect(fill="white"))
-```
-
-```{r temp-diff, message=FALSE,warning=FALSE, fig.cap="The plot for the difference between the average temperature of 1961-1990(as baseline) and the annual average temperature for each year from 1910 to 2019, calculated by daily maximum temperature", warning=FALSE, message=FALSE}
-# temperature difference data
-temp_diff <- temperature %>%
-  filter(temp_type == "max") %>% 
-  filter(year <= 2019) %>% 
-  group_by(year) %>% 
-  summarise(avg = mean(temperature,na.rm = TRUE)) %>% 
-  mutate(diff = (avg - meanTemp$avg),
-         diff = round(diff,2))
-
-temp_diff$ismax <- with(temp_diff, ave(diff, FUN=function(x) x==max(x)))
-
-# plot difference
-temp_diff %>% 
-  ggplot(aes(year, diff, fill=as.factor(ismax))) + 
-  geom_bar(stat="identity") +
-  scale_y_continuous(breaks = seq(-1.5,1.5,0.5))+
-  scale_fill_manual(breaks=c("0","1"), 
-                    values=c("#C7C7C7","#F08080"), 
-                    guide="none")+
-  geom_hline(yintercept = 0, color = "#9C9C9C")+
-  annotate(geom="text", 
-           x=1930, y=0.8, 
-           label="Annual temperature's difference \n with the 1961–1990 average",
-           color="grey", 
-           size = 3)+
-  annotate(geom="text", 
-           x=1917, y=1.5, 
-           label="above than average(°C)",
-           color="grey", 
-           size = 3)+
-  annotate(geom = "text",
-           x=2019,y=1.8,
-           label="2019",
-           size = 3)+
-  annotate(geom = "text",
-           x=1917,y=-1.9,
-           label="1917",
-           size = 3)+
-  annotate(geom = "text",
-           x=1972,y=0.5,
-           label="1970",
-           size = 3)+
-  ggtitle("The annual temperature difference in Australia from 1910 to 2019")+
-  themes_p
-
-```
-
-```{r fire-year-sum, warning=FALSE, message=FALSE}
-# calculate annual mean temperature
-sum_fire <- nasa_fire %>% 
-  mutate(year = year(acq_date)) %>% 
-  filter(year > 2000 & year <= 2019) %>% 
-  group_by(year) %>% 
-  summarise(n = n()) %>% 
-  mutate(time = paste0(year, "-01-01"),
-         time = as.Date(time)) 
-```
-
-```{r fire-yearly-plot, fig.cap="Annual total fires trends from 2001 to 2019", fig.align='center'}
-# prepare time series data
-fire_year_dat <- xts(x = sum_fire$n, order.by = sum_fire$time)
-
-# time series plot
-dygraph(fire_year_dat) %>%
-  dyOptions(labelsUTC = TRUE, 
-            fillGraph=TRUE, 
-            fillAlpha=0.15, 
-            drawGrid = FALSE, 
-            colors="#EED5D2") %>%
-  dyRangeSelector(dateWindow = c("2000-01-01", "2019-01-01"),
-                  height = 50,
-                  fillColor = "#BFEFFF",) %>%
-  dyCrosshair(direction = "vertical") %>%
-  dyHighlight(highlightCircleSize = 5, 
-              highlightSeriesBackgroundAlpha = 0.1, 
-              hideOnMouseOut = FALSE)  %>%
-  dyRoller(rollPeriod = 1)%>% 
-  dySeries("V1", label = "Total bushfires number")
-
-```
-
 Figure \@ref(fig:fire-yearly-plot) shows the total number of fires in Australia from 2001 to 2019. Compared with Figure \@ref(fig:temp-yearly-plot), the total number of fires is fairly consistent??. When the temperature is high, there are generally more fires. 
 
 The most fires occurred in 2012 with 474,964 fires, however, the average temperature was relatively low, at 22.57°C. These bushfires can be explained by a lightening strike[@dowdy2012characteristics]. 
@@ -566,47 +638,20 @@ Ultimately, the analysis above demonstrates that a high temperature is closely r
 
 ### Negative association with rain and bushfires {#rain}
 
+```{r, fig.cap="The Trend of Rainfall and Bushfires"}
+scl2 <-10000
+p5 <- ggplot(fire_rain, aes(x = time)) + 
+  geom_line(aes(y = Total/scl2, colour = "Total")) + 
+  geom_line(aes(y = `Average rainfall`, colour = "Avg")) +
+  scale_y_continuous(sec.axis = sec_axis(~./scl2, name = "Avg Rainfall"))
+  ggtitle("The Trend of Rainfall and Bushfires") +
+  theme_bw() +
+  theme(plot.title = element_text(face = "bold"), plot.background = element_rect(fill="white"))
+
+ggplotly(p5)
+```
+
 Australia's location means that rainfall is highly variable. It is strongly influenced by the global climate system phenomena such as El Niño, La Niña, and IOD. 
-
-```{r rainfall-wrangling-data}
-rain<-rainfall%>%
- drop_na()%>%
-  select(station_code,year,rainfall,city_name)%>%
-  filter(station_code %in% c("9151","23001","40913","66062","70351","86232"))%>%
-  filter(year>=1970&year<=2019)
-```
-
-```{r rain-year-sum, warning=FALSE, message=FALSE}
-# calculate annual rainfall
-annual_rain <- rain %>% 
-  select(year,rainfall)%>%
-  group_by(year) %>% 
-  summarise(total=sum(rainfall))%>%
-    mutate(time = paste0(year, "-01-01"),
-         time = as.Date(time)) 
-```
-
-```{r rain-yearly-plot, fig.cap="Annual total rainfall trends from 2001 to 2019"}
-# prepare time series data
-rain_year_dat <- xts(x = annual_rain$total, order.by = annual_rain$time)
-
-# time series plot
-dygraph(rain_year_dat) %>%
-  dyOptions(labelsUTC = TRUE, 
-            fillGraph=TRUE, 
-            fillAlpha=0.15, 
-            drawGrid = FALSE, 
-            colors="#EED5D2") %>%
-    dyRangeSelector(dateWindow = c("2000-01-01", "2019-01-01"),
-                  height = 50,
-                  fillColor = "#BFEFFF",) %>%
-  dyCrosshair(direction = "vertical") %>%
-  dyHighlight(highlightCircleSize = 5, 
-              highlightSeriesBackgroundAlpha = 0.1, 
-              hideOnMouseOut = FALSE)  %>%
-  dyRoller(rollPeriod = 1)%>%
-  dySeries("V1", label = "Annual rainfall (mm)")
-```
 
 Figure \@ref(fig:rain-yearly-plot) shows how the annual rainfall has changed over time in Australia. In 1994 there was a severe drought, influenced by the El Niño weather pattern. This was the fifth year of drought for some parts of Australia[@nicholls2004changing]. In 2010, the annual rainfall was the highest in 20 years. This was a result of a La Niña event. 
 
@@ -617,69 +662,7 @@ As a result of the positive IOD, the Walker Circulation was severely curtailed a
 Figure \@ref(fig:fire-yearly-plot) shows there has been a consistent average number of fires (250,000) in the last 20 years. The number of fires in 2010 was the lowest, which may be due to the high rainfall as a result of the La Niña event. 
   
 From Figure \@ref(fig:rain-diff-annual), the annual average rainfall changed cross-time compare with the average baseline. Over the last 20 years, the rainfall has consistently been below average, with the occasional outlier in 2010 and 2011.
- 
-```{r baseline-rain, warning=FALSE, message=FALSE}
-#the annual rainfall baseline selected by the Australian BOM from 1961 to 1990
-rainmean<-rain%>%
-  select(year,rainfall)%>%
-  filter(year>=1970&year<=1990)%>%
-  group_by(year)%>%
- summarise(avg=sum(rainfall))
 
-rainmean<-rainmean%>%
-  mutate(baseline=sum(avg)/120)
-  
-```
-
-```{r rainfall-diff, warning=FALSE, message=FALSE}
-#277.6 is the annual rainfall baseline selected by the Australian BOM from 1961 to 1990
-rain_diff <- rain %>%
-  select(year,rainfall)%>%
-  group_by(year) %>% 
-  summarise(avg = sum(rainfall)/6)%>%
-  mutate(diff = (avg - rainmean$baseline ),
-         diff = round(diff,2))
-```
-
-```{r rain-diff-annual,fig.cap="Annual rainfall difference"}
-rain_diff$ismax <- with(rain_diff, ave(year, FUN=function(x) x==max(x)))
-
-ggplot(rain_diff,aes(x=year, y=diff,fill=as.factor(ismax))) + 
-  geom_bar(stat = "identity")+
-  scale_fill_manual(breaks=c("0","1"), values=c("#C7C7C7","#F08080"), guide="none")+
-   geom_hline(yintercept = 0, color = "#9C9C9C")+
-  scale_y_continuous(breaks = seq(-400,400,100))+
-  annotate(geom="text", 
-           x=1985, y=230, 
-           label="Annual rainfall difference \n with the 1961–1990 average",
-           color="grey", 
-           size = 3)+
-  annotate(geom="text", 
-           x=1975, y=300, 
-           label="above than millimeters(mm)",
-           color="grey", 
-           size = 3)+
-  annotate(geom = "text",
-           x=2019,y=-300,
-           label="2019",
-           size = 3)+
-  annotate(geom = "text",
-           x=1994,y=-380,
-           label="1994",
-           size = 3)+
-   annotate(geom = "text",
-           x=2000,y=-220,
-           label="2000",
-           size = 3)+
-  annotate(geom = "text",
-           x=2010,y=100,
-           label="2010",
-           size = 3)+
-  ylab("rainfall")+
-  ggtitle("The annual rainfall difference in Australia from 1970 to 2019")+
-  themes_p
-
-```
 
 It is evident that the low rainfall in 2019 was a contributor to the high number of bushfires.
 
@@ -724,16 +707,29 @@ all_data <- fire_annual %>%
          log_rainfall=log(rainfall))
 ```
 
-```{r correlation, fig.cap="The correlation between rainfall, temperature and bushfires"}
-GGally::ggpairs(all_data,c(4:6))+
-  theme_bw()+
-  theme(panel.grid.major = element_blank(), 
-        panel.border = element_rect(linetype = "dashed", 
-                                    colour = "#69b3a2", 
-                                    fill = NA))
+```{r correlation_color, fig.cap="The correlation between rainfall, temperature and bushfires"}
+
+all_data1 <- all_data %>%
+  select(-year,
+         -fire,
+         -rainfall)
+Cor <- cor(all_data1)
+corrplot(Cor, method = 'color', 
+                     order = 'hclust', 
+                     type = 'upper', 
+                     diag = FALSE, 
+                     tl.col = 'black',
+                     addCoef.col = "grey30",
+                     number.cex = 1.2,
+                     col = colorRampPalette(colors = c('red', 'white', 'blue'))(200),
+                     main = 'Weather and Bushfires Correlation',
+                     mar = c(1,1,1,1),
+                     family = 'Avenir')
+
 ```
 
-Figure \@ref(fig:correlation) demonstrated that rainfall and bushfires have a negative correlation, suggesting that more rainfall means fewer bushfires. Additionally, it shows that a higher temperature leads to more bushfires. Although the correlation between these two variables is small, the relationship is still evident. Moreover, when the temperature is higher, there is less rain.
+
+Figure \@ref(fig:correlation-color) demonstrated that rainfall and bushfires have a negative correlation, suggesting that more rainfall means fewer bushfires. Additionally, it shows that a higher temperature leads to more bushfires. Although the correlation between these two variables is small, the relationship is still evident. Moreover, when the temperature is higher, there is less rain.
   
 In conclusion, the main climatic conditions of bushfire is hot and dry[@van2020attribution]. The graph of annual rainfall and temperature show that the hottest and driest year is 2019, which has the most massive bushfires in Australia as well. Therefore, as the combination of arid and severe hot conditions adds up to more powerful fires, indicating that declines in rainfall and increases in temperature have likely been a primary driver of increases in wildfire area burned.  
 
@@ -749,129 +745,12 @@ The authors would like to thank all the contributors to the following R package:
 
 # Year section
 
-```{r rainjitterplot, fig.cap ="Average monthly rainfall from 2001", warning=FALSE, message=FALSE}
-rain_jitter <- rainfall %>% 
-  filter(year == "2011") %>% 
-  select(city_name, year, month, day, rainfall)
-  
-ggplot(data = rain_jitter,
-       aes(x = month,y = rainfall,color = rainfall)) + 
-       scale_color_gradientn(colours=rev(brewer.pal(10,'Spectral'))) + 
-       geom_jitter(shape=16,position=position_jitter(0.2),size=1.8) + 
-       theme_ipsum() +
-    theme(
-      panel.grid.minor.y = element_blank(),
-      panel.grid.major.y = element_blank(),
-      legend.position="none") +
-    xlab("Month")+
-    ggtitle("Average monthly rainfall in 2011") +
-       facet_wrap(~city_name)
-```
-
-```{r heatmapdata}
-temperature_year <- temperature %>%
-  select(year, temp_type, city_name, temperature) %>%
-  filter(temp_type == "max") %>%
-  group_by(year,  city_name) %>% 
-  summarise(average_temp = mean(temperature,na.rm=T))
-```
-
-```{r heatmap}
-p3 <- ggplot(data=temperature_year, aes(x=year, y=city_name)) + 
-        geom_tile(aes(fill = average_temp),colour = "white") + 
-        scale_fill_gradientn(colours=rev(brewer.pal(20,'Spectral'))) + 
-      theme(legend.title=element_blank(),axis.title.y=element_blank(),axis.title.x=element_blank(),axis.text.x = element_text(angle=45, hjust=1), legend.position="top") +
-       ggtitle("Temperature (daily average)")
-
-ggplotly(p3)
-```
 
 
 
-```{r geomline}
-data_fire_Year_line <- nasa_fire %>% 
-  mutate(acq_date = as.POSIXct(acq_date)) %>% 
-  mutate(Year = year(acq_date), Month = month(acq_date)) %>% 
-  filter(Year > 2000) %>% 
-  mutate(Year = factor(Year)) %>%
-  group_by(Year,Month)%>% 
-  summarise(Total = n()) %>% 
-  mutate(time = paste0(Year, "-", Month, "-01"),
-         time = as.Date(time))
-
-
-rain_agv_line <- rainfall %>% 
-  filter(year > "2000") %>% 
-  group_by (year, month) %>% 
-  summarise(`Average rainfall`= mean(rainfall,na.rm=TRUE)) %>% 
-  arrange(-year) %>% 
-  mutate(time = paste0(year, "-", month, "-01"),
-         time = as.Date(time))
-
-temp_year_line <- temperature %>% 
-  filter(temp_type == "max") %>% 
-  filter(year > 2000) %>% 
-  group_by(year) %>% 
-  summarise(avg = mean(temperature,na.rm = TRUE)) %>% 
-  mutate(time = paste0(year, "-01-01"),
-         time = as.Date(time))
-
-
-fire_rain <- data_fire_Year_line %>% 
-  left_join(rain_agv_line, by = "time")
-
-fire_temp <- data_fire_Year_line %>% 
-  left_join(temp_year_line, by = "time") %>% 
-  drop_na()
-```
 
 
 
-```{r, fig.cap="The Trend of Temperature and Bushfires"}
-scl <- 1000
-p4 <- ggplot(fire_temp, aes(x = time)) + 
-  geom_line(aes(y = Total/scl, colour = "Total")) + 
-  geom_line(aes(y = avg, colour = "Avg")) +
-  scale_y_continuous(sec.axis = sec_axis(~./scl, name = "Avg"))+ 
-  ggtitle("The Trend of Temperature and Bushfires") +
-  theme_bw() +
-  theme(axis.text.y = element_text(color = "grey", face = "bold"),
-  plot.title = element_text(face = "bold"),
-  plot.background = element_rect(fill="white"))
-
-ggplotly(p4)
-```
-
-```{r, fig.cap="The Trend of Rainfall and Bushfires"}
-scl2 <-10000
-p5 <- ggplot(fire_rain, aes(x = time)) + 
-  geom_line(aes(y = Total/scl2, colour = "Total")) + 
-  geom_line(aes(y = `Average rainfall`, colour = "Avg")) +
-  scale_y_continuous(sec.axis = sec_axis(~./scl2, name = "Avg Rainfall"))
-  ggtitle("The Trend of Rainfall and Bushfires") +
-  theme_bw() +
-  theme(plot.title = element_text(face = "bold"), plot.background = element_rect(fill="white"))
-
-ggplotly(p5)
-```
-
-```{r correlation_color, fig.cap="The correlation between rainfall, temperature and bushfires"}
-
-Cor <- cor(all_data)
-corrplot(Cor, method = 'color', 
-                     order = 'hclust', 
-                     type = 'upper', 
-                     diag = FALSE, 
-                     tl.col = 'black',
-                     addCoef.col = "grey30",
-                     number.cex = 1.2,
-                     col = colorRampPalette(colors = c('red', 'white', 'blue'))(200),
-                     main = 'Weather and Bushfires Correlation',
-                     mar = c(1,1,1,1),
-                     family = 'Avenir')
-
-
-```
 
 From Figure \@ref(fig:correlation_color), it seems that the rainfall and bushfires have small negative correlation, which is only 30%. This means that if the average annual precipitation increases, the probability of bushfires may decrease with 30% of the increase in precipitation. 
 
