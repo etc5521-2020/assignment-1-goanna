@@ -3,6 +3,9 @@ title: "ETC5521 Assignment 1"
 subtitle: "Australian bushfires: The effect of climatic condition"
 team: goanna
 author:
+  - XUE WANG
+  - XITONG HE
+  - CUIPING WEI
   - Chengzhi Ye
   - Emily Sheehan
   - Dea Avega Editya
@@ -64,9 +67,9 @@ The analysis has been divided into three parts; climactic condition, bushfires a
 
 Climactic condition:
 
-* Where does rainfall occur most in Australia? **(NEW Q)**
-* What is the hottest climate in Australia? **(NEW Q)**
-* How has global warming impacted temperatures in Australia? **(NEW Q)**
+* Where does rainfall occur most in Australia? 
+* What is the hottest climate in Australia?
+* How has global warming impacted temperatures in Australia? 
 
 Bushfires:
 
@@ -75,8 +78,9 @@ Bushfires:
 
 Relationship between climactic condition and bushfires:
 
-* How does temperature and rainfall affect the number of bushfires?
-* What is the correlation between climactic conditions and bushfires? **(NEW Q)** 
+* Positive trend for bushfires and temperature
+* Negative trend for bushfires and rain 
+* What is the correlation between climactic conditions and bushfires?
 
 # Data description {#data}
 
@@ -201,25 +205,7 @@ The rainfall and temperature data has been recorded for some major cities, and t
 
 ### Where does rainfall occur the most in Australia? 
 
-```{r rainjitterplot, fig.cap ="Average monthly rainfall for 2019", warning=FALSE, message=FALSE}
-rain_jitter <- rainfall %>% 
-  filter(year == "2019") %>% 
-  select(city_name, year, month, day, rainfall)
-  
-ggplot(data = rain_jitter,
-       aes(x = factor(month),y = rainfall,color = rainfall)) + 
-       scale_color_gradientn(colours=rev(brewer.pal(10,'Spectral'))) + 
-       geom_jitter(shape=16,position=position_jitter(0.2),size=1.8) + 
-       theme_ipsum() +
-    theme(
-      panel.grid.minor.y = element_blank(),
-      panel.grid.major.y = element_blank(),
-      legend.position="none") +
-    xlab("Month")+
-    ggtitle("Average monthly rainfall in 2019") +
-       facet_wrap(~city_name)
-```
-```{r average-rain1, fig.cap ="Average monthly rainfall from 2001", warning=FALSE, message=FALSE}
+```{r average-rain, fig.cap ="Average monthly rainfall for each state in 2011", warning=FALSE, message=FALSE, fig.height= 6, fig.width=7}
 rain_agv <- rainfall %>% 
   filter(year == "2011") %>% 
   mutate(month = case_when(month == "1" ~ "Jan",
@@ -243,20 +229,25 @@ m <- factor(c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oc
  
 r_agv <- rain_agv %>%
   mutate(month) %>%
-  ggplot(aes(x= factor(month, m), y=`Average rainfall`/100) ) +
+  ggplot(aes(x= factor(month, m), 
+             y=`Average rainfall`),
+         color = rainfall) +
     # geom_segment(aes(x=month ,xend= month, y=0, yend=`Average rainfall`), color="grey") +
     geom_point(size=3, color="#69b3a2") +
-    # theme_ipsum() +
-    theme_bw()+
+   theme_ipsum() +
+    #theme_bw()+
     xlab("")+
   ylab("")+
-    ggtitle("Average Monthly Rainfall (in Mm) in 2011") +
-    facet_wrap(~city_name, nrow = 3) 
+    ggtitle("Average Monthly Rainfall (in mm) in 2011") +
+    facet_wrap(~city_name, nrow = 3) +
+    theme(
+      panel.grid.minor.y = element_blank(),
+      panel.grid.major.y = element_blank()) 
 
 ggplotly(r_agv)
 ```
 
-Figure \@ref(fig:rainjitterplot) shows the average monthly rainfall in 2019 for Adelaide, Brisbane, Canberra, Melbourne, Perth and Sydney. From this chart it is evident that Sydney had the most rain throuhgout 2019. The amount of rainfall in each state varies from month to month, which is likely due to each state having slightly different weather patterns and seasons.
+Figure \@ref(fig:average-rain) shows the average monthly rainfall in 2019 for Adelaide, Brisbane, Canberra, Melbourne, Perth and Sydney. The amount of rainfall in each state varies from month to month, which is likely due to each state having slightly different weather patterns and seasons. However, Melbourne, Adelaide and Canberra have similar rainfall patterns in 2011. 
 
 ### Where is the hottest climate in Australia?
 
@@ -265,7 +256,7 @@ temperature <- temperature %>%
   mutate(year = year(date)) 
 ```
 
-```{r heatmapdata, warning=FALSE}
+```{r heatmapdata, warning=FALSE, message = FALSE}
 temperature_year <- temperature %>%
   select(year, temp_type, city_name, temperature) %>%
   filter(temp_type == "max") %>%
@@ -278,11 +269,13 @@ ggplot(data=temperature_year, aes(x=year, y=city_name)) +
         geom_tile(aes(fill = average_temp),colour = "white") + 
         scale_fill_gradientn(colours=rev(brewer.pal(20,'Spectral'))) + 
       theme(legend.title=element_blank(),axis.title.y=element_blank(),axis.title.x=element_blank(),axis.text.x = element_text(angle=45, hjust=1), legend.position="top") +
-       ggtitle("Temperature (daily average)") +
-  theme_bw()
+       ggtitle("The Average Daily Temperature Overtime") +
+  theme_ipsum() +
+  xlab("") +
+  ylab("")
 
 ```
-Figure \@ref(fig:heatmap) is a heatmap displaying the daily average temperature for each cities. It is clear that the warmest cities are Brisbane and Perth on average. Alarmingly, each area/city is increasing in temperature overtime, which is clear evidence of global warming. 
+Figure \@ref(fig:heatmap) is a heatmap displaying the daily average temperature for each city. It is clear that the warmest cities are Brisbane and Perth on average. Alarmingly, each area/city is increasing in temperature overtime, which is evidence of global warming. This will be discussed in the next section. 
 
 ### How has climate change impacted weather patterns in Australia?
 
@@ -366,7 +359,7 @@ temp_diff %>%
   themes_p
 
 ```
-Figure \@ref(fig:temp-diff) shows the average temperature difference in Australia from 1910 to 2019. It is compared against the average temperature from 1961-1990. There is a clear upward trend, thus indicating that the average temperature in Australia is increasing. The figure highlights the average temperature for 2019, as it was the highest average temperature on record. 
+Figure \@ref(fig:temp-diff) shows the average temperature difference in Australia from 1910 to 2019. It is compared against the average temperature from 1961-1990. There is a clear upward trend, thus indicating that the average temperature in Australia is increasing. The figure highlights the average temperature for 2019, as it was the highest average temperature on record @bureau2019annual by over 1.5°C. 
  
 ```{r baseline-rain, warning=FALSE, message=FALSE}
 #the annual rainfall baseline selected by the Australian BOM from 1961 to 1990
@@ -437,7 +430,9 @@ ggplot(rain_diff,aes(x=year, y=diff,fill=as.factor(ismax))) +
 
 ```
 
-Figure \@ref(fig:rain-diff-annual) shows the average rainfall difference in Australia from 1910 to 2019. The calculated average rainfall for a given year is compared against the average rainfall from 1961-1990. From 1961-1990 the average rainfall is variable, which is likely a result of the natural weather patterns. However, after 1990 there is a clear downward trend, indicating that each year there is less rainfall than the 1961-1990 average. Interestingly enough, 2019 had one of biggest differences and thus had considerably less rainfall than other years.  
+Figure \@ref(fig:rain-diff-annual) shows the average rainfall difference in Australia from 1910 to 2019. The calculated average rainfall for a given year is compared against the average rainfall from 1961-1990. From 1961-1990 the average rainfall is variable, which is likely a result of the natural weather patterns. However, after 1990 there is a clear downward trend, indicating that each year there is less rainfall than the 1961-1990 average. 
+
+Moreover, 2019 had one of biggest differences and thus had considerably less rainfall than other years. In 1994, there was a severe drought influenced by the El Niño weather pattern. This was the fifth year of drought for some parts of Australia [@nicholls2004changing]. In 2010, the annual rainfall was the highest in 20 years which was the result of a La Niña event. 
 
 Both figures indicate that climate change has lead to Australia becoming a hotter and drier continent. As mentioned above, this is the 'perfect storm' for bushfires. 
 
@@ -514,7 +509,7 @@ Figure \@ref(fig:when) is a line plot showing the number of bushfires for each y
 
 In addition, there were more bushfires in September 2011 than in any other year in the same period. According to @blanchi2014environmental, these bushfires were the result of a combination of low rainfall and strong winds. 
  
-The overall trend line shows that bushfires are more likely to occur from August to November. This is the winter-spring period in Australia. These months are typically drier in most parts of Australia as seen in Figure \@ref(fig:rainjitterplot), which can lead to the ignition of forest fuels [@sullivan2012fuel] and thus bushfires.  
+The overall trend line shows that bushfires are more likely to occur from August to November. This is the winter-spring period in Australia. These months are typically drier in most parts of Australia as seen in Figure \@ref(fig:average-rain), which can lead to the ignition of forest fuels [@sullivan2012fuel] and thus bushfires.  
 
 ### Where are the bushfires burning?
 
@@ -570,14 +565,15 @@ fire <- ggplot(state_fire, aes(x = Year,y = Total)) +
          plot.background = element_rect(fill="white"),
         panel.background = element_rect(fill="white"))+
   geom_hline(yintercept = national_avg, linetype = "dashed", alpha = 0.5)+
-  ggtitle("Bushfire in States/Regions during 20 years")
+  ggtitle("The number of Bushfires in the last 20 years according to Region")
 
   ggplotly(fire)
 
 ```
-Most bushfires occur in the Northern Territory and Queensland, as seen in Figure \@ref(fig:state). This is likely to both areas being prone to drought and have high concentrations of vegetation. 
 
-Figure \@ref(fig:state) shows that the number of fires in Victoria and New South Wales is relatively stable, with the exception of 2019. As mentioned above, this is due to the catastrophic bushfires that took place over this period. Additionally, figure \@ref(fig:map) shows the distribution of bushfires from the end of 2019 to the beginning of 2020. It predominantly captures Victoria and NSW, due to the extensive fires in 2019.
+Figure \@ref(fig:state) shows the number of bushfires in the last 20 years according to region. A line has been added to  line show the average number of bushfires (over the last 20 years) to make comparison easier. Most bushfires occur in the Northern Territory and Queensland, as seen in Figure \@ref(fig:state). Both areas are prone to drought and have high concentrations of vegetation. The number of fires in Victoria and New South Wales is relatively stable, with the exception of 2019. As mentioned above, this is due to the catastrophic bushfires that took place over this period. 
+
+Figure \@ref(fig:map) shows the distribution of bushfires from the end of 2019 to the beginning of 2020. It predominantly captures Victoria and NSW, due to the extensive fires in 2019.
 
 ```{r map, message = FALSE, fig.cap="The distribution point for Australian bushfires from 2019-12-29 to 2020-01-05(the darker the color, the more serious the fire)", fig.align='center'}
 subset <- nasa_fire %>% 
@@ -600,9 +596,9 @@ leaflet(data = subset) %>%
 
 ## How does temperature and rainfall affect the number of bushfires?
 
-### Positive association with temperature and bushfires {#temp}
+### Positive Trend for Bushfires and Temperature {#temp}
 
-```{r geomline}
+```{r geomline, warning = FALSE, message=FALSE}
 data_fire_Year_line <- nasa_fire %>% 
   mutate(acq_date = as.POSIXct(acq_date)) %>% 
   mutate(Year = year(acq_date), Month = month(acq_date)) %>% 
@@ -637,23 +633,6 @@ fire_rain <- data_fire_Year_line %>%
 fire_temp <- data_fire_Year_line %>% 
   left_join(temp_year_line, by = "time") %>% 
   drop_na()
-```
-
-
-
-```{r, fig.cap="The Trend of Temperature and Bushfires"}
-scl <- 1000
-p4 <- ggplot(fire_temp, aes(x = time)) + 
-  geom_line(aes(y = Total/scl, colour = "Total_Bushfires")) + 
-  geom_line(aes(y = avg, colour = "Avg_Temperature")) +
-  scale_y_continuous(sec.axis = sec_axis(~./scl, name = "Avg"))+ 
-  ggtitle("The Trend of Temperature and Bushfires") +
-  theme_bw() +
-  theme(axis.text.y = element_text(color = "grey", face = "bold"),
-  plot.title = element_text(face = "bold"),
-  plot.background = element_rect(fill="white"))
-
-ggplotly(p4)
 ```
 
 ```{r fire-year-sum, warning=FALSE, message=FALSE}
@@ -761,48 +740,56 @@ temp_vs_fire <- temp_fire %>%
   geom_hline(yintercept = 0, color = "#9C9C9C")+
   geom_vline(xintercept = 2011, linetype = "dashed", alpha = 0.5)+
   geom_vline(xintercept = 2019, linetype = "dashed", alpha = 0.5)+
-  ylab("Temperature Differences (celcius)")+
-  ggtitle("Average Temperature Difference vs Bushfires")
+  ylab("Temperature Differences (Celcius)")+
+  ggtitle("Average Temperature Difference vs Bushfires") +
+  theme_ipsum() +
+  xlab("") 
 
 ggplotly(temp_vs_fire)
 
 ```
 
-Figure \@ref(fig:temp-yearly-plot) shows the average temperature in 2019 is significantly higher than other years. A strong positive Indian Ocean Dipole (IOD) phenomenon was the culprit[@harris2019understanding], and contributed to very high temperatures and low rainfall across Australia[@bureau2019annual], beginning in May 2019 and lasting until the end of the year.   
+This section is focused on the base assumption that higher temperatures contribute to a higher number of bushfires. 
 
-```{r IOD, fig.cap= 'Indian Ocean Dipole: positive phase. Source from Australian BOM.', out.width = '60%', out.height='60%'}
-knitr::include_graphics("images/iod-positive.png")
-```
-  
-How big is the difference between the temperature in 2019 and other years? 
+Figure \@ref(fig:temp-diff1) shows the association between temperature and bushfires. The temperature variable has been plotted as a temperature difference from the average temperature during a period of observations (2000-2020). Mathematically, the temperature difference is formulated below:
 
-Figure \@ref(fig:temp-diff) shows the average annual temperature from 1961 to 1990. From 1910 to mid-1950, the annual average temperature for almost all years was lower than the baseline. Since the mid-1950s, the average annual temperature has been higher than the baseline. Although there has been the odd year, these are outliers.
+$$ Average\;Temperature\;Difference_n = Annual\;Temperature_n\; - Average\;Temperature\;in\;Period\;of\;Observations$$
 
-Moreover, it is worth noting that 2019 is significantly higher than in other years, with a difference of above 1.5°C. As @bureau2019annual states, 2019 was Australia's warmest year on record, surpassing the previous record of +1.35°C in 2013.   
+Since the average number of bushfires has different scale to temperatures, the annual average bushfires has been scaled down using log 10 and square root. By doing so, the two variables can be placed in a single plot to see the patterns. 
 
-Evidently, the rising annual temperature has been a warning that Global warming is a growing problem. Ultimately, global warming leads to many natural disasters, bushfires included. 
+Figure \@ref(fig:temp-diff1), shows that the annual temperature trend seems to rise from 2000 until 2019, similar to figure \@ref(fig:temp-diff). The average annual number of bushfires has also increased slightly. Therefore, the association seems to be positive, but not strong. As an example, the average number of bushfires rised sharply in 2011 (marked by black dashed line) while the temperature only increased slightly. Additionally, the temperature from 2015 to 2020 has increased dramatically, while the average number of bushfires has only increased slightly. 
 
-Figure \@ref(fig:fire-yearly-plot) shows the total number of fires in Australia from 2001 to 2019. Compared with Figure \@ref(fig:temp-yearly-plot), the total number of fires is fairly consistent??. When the temperature is high, there are generally more fires. 
+### Negative Trend for Bushfires and Rain {#rain}
 
-The most fires occurred in 2012 with 474,964 fires, however, the average temperature was relatively low, at 22.57°C. These bushfires can be explained by a lightening strike[@dowdy2012characteristics]. 
-
-Ultimately, the analysis above demonstrates that a high temperature is closely related to bushfires. When the temperature is high and climate is dry, forest fuels are more likely to catch alight[@oldenborgh2020attribution].  
-
-### Negative association with rain and bushfires {#rain}
-
-```{r, fig.cap="The Trend of Rainfall and Bushfires"}
-scl2 <-10000
-p5 <- ggplot(fire_rain, aes(x = time)) + 
-  geom_line(aes(y = Total/scl2, colour = "Total")) + 
-  geom_line(aes(y = `Average rainfall`, colour = "Avg")) +
-  scale_y_continuous(sec.axis = sec_axis(~./scl2, name = "Avg Rainfall"))
-  ggtitle("The Trend of Rainfall and Bushfires") +
-  theme_bw() +
-  theme(plot.title = element_text(face = "bold"), plot.background = element_rect(fill="white"))
-
-ggplotly(p5)
+```{r rainfall-wrangling-data}
+rain<-rainfall%>%
+ drop_na()%>%
+  select(station_code,year,rainfall,city_name)%>%
+  filter(station_code %in% c("9151","23001","40913","66062","70351","86232"))%>%
+  filter(year>=1970&year<=2019)
 ```
 
+```{r rain-year-sum, warning=FALSE, message=FALSE}
+# calculate annual rainfall
+annual_rain <- rain %>% 
+  select(year,rainfall)%>%
+  group_by(year) %>% 
+  summarise(total=sum(rainfall))%>%
+    mutate(time = paste0(year, "-01-01"),
+         time = as.Date(time)) 
+```
+
+```{r rainfall-diff1, warning=FALSE, message=FALSE}
+#277.6 is the annual rainfall baseline selected by the Australian BOM from 1961 to 1990
+rain_diff <- rain %>%
+ select(year,rainfall)%>%
+ filter(year >= 2000) %>% 
+ group_by(year) %>% 
+ summarise(avg = mean(rainfall))%>%
+ mutate(baseline = as.numeric(lapply(rainmean$baseline[1], rep))) %>% 
+ mutate(diff = avg - baseline,
+        diff = round(diff,2))
+```
 
 ```{r rain-annual,fig.cap="Annual Rainfall and Bushfires", out.width="70%"}
 rain_diff$ismax <- with(rain_diff, ave(year, FUN=function(x) x==max(x)))
@@ -813,7 +800,7 @@ rain_vs_fire <- left_join(rain_diff, avg_fire, by = "year") %>%
 rainfire <- ggplot(rain_vs_fire, aes(x = year)) + 
   geom_bar(aes(y = avg.x), stat = "identity", alpha = 0.4) +
   # scale_fill_manual(breaks=c("0","1"), values=c("#C7C7C7","#F08080"), guide="none")+
-   geom_hline(yintercept = 0, color = "#9C9C9C")+
+  geom_hline(yintercept = 0, color = "#9C9C9C")+
   # scale_y_continuous(breaks = seq(-400,400,100))+
   geom_line(aes(y = avg.x), color = "green", size = 1.1)+
   geom_text(aes(y = log_avg, label = ifelse(year == 2012, "Monthly Average BushFires (scaled down)", "")), cex = 3, nudge_y = 0.25)+ 
@@ -821,28 +808,23 @@ rainfire <- ggplot(rain_vs_fire, aes(x = year)) +
   ylab("Rainfall (mm)")+
   geom_vline(xintercept = 2011, linetype = "dashed")+
   geom_vline(xintercept = 2019, linetype = "dashed")+
-  ggtitle("The Average Rainfall vs Bushfire")
+  ggtitle("The Average Rainfall vs Bushfire")+
+  theme_ipsum()
 
 
 ggplotly(rainfire)
+
 ```
 
-Australia's location means that rainfall is highly variable. It is strongly influenced by the global climate system phenomena such as El Niño, La Niña, and IOD. 
+This section is based on the assumption that increased rainfall leads to less bushfires.
 
-Figure \@ref(fig:rain-yearly-plot) shows how the annual rainfall has changed over time in Australia. In 1994 there was a severe drought, influenced by the El Niño weather pattern. This was the fifth year of drought for some parts of Australia[@nicholls2004changing]. In 2010, the annual rainfall was the highest in 20 years. This was a result of a La Niña event. 
+Figure \@ref(fig:rain-annual) shows the association between rain and bushfires. Similar to above, the temperature variable has been plotted as a temperature difference from the average temperature during 2000-2020. Since the average number of bushfires has different scale to rainfall, the annual average bushfires has been scaled down using log 10. By doing so, the two variables can be placed in a single plot to see the patterns. 
 
-2019 was the driest year in the last 20 years. One reason is that the strongest positive IOD reached the highest values on record across 60 years, and due to the frequency and influence of sea-surface temperature changes, the El Nino-Southern Oscillation(ENSO) is neutral throughout the year??????
+Australia’s location means that rainfall is highly variable. It is strongly influenced by the global climate system phenomena such as El Niño, La Niña, and IOD. However, figure \@ref(fig:rain-annual) shows that the annual rainfall is decreasing. Over this time, the average number of bushfires has increased slightly. It is likely there is a weak negative association.
 
-As a result of the positive IOD, the Walker Circulation was severely curtailed and there was abnormal easterly winds in the Indian Ocean. These winds meant cloud cover in Australia was swept away, dramatically reducing rainfall across Australia[@hughes2003climate]. 
+### What is the correlation between climactic conditions and bushfires?
 
-Figure \@ref(fig:fire-yearly-plot) shows there has been a consistent average number of fires (250,000) in the last 20 years. The number of fires in 2010 was the lowest, which may be due to the high rainfall as a result of the La Niña event. 
-  
-From Figure \@ref(fig:rain-diff-annual), the annual average rainfall changed cross-time compare with the average baseline. Over the last 20 years, the rainfall has consistently been below average, with the occasional outlier in 2010 and 2011.
-
-
-It is evident that the low rainfall in 2019 was a contributor to the high number of bushfires.
-
-### The correlation between climatic conditions and bushfires
+This section outlines the correlation between climactic conditions and bushfires.
 
 ```{r rainfall-annual-data, warning=FALSE, message=FALSE}
 rain_annual<-rain%>%
@@ -874,7 +856,6 @@ temp_annual <- temp_year %>%
          temperature = avg)
 ```
 
-
 ```{r all-data}
 all_data <- fire_annual %>% 
   left_join(rain_annual, by = "year") %>% 
@@ -883,7 +864,7 @@ all_data <- fire_annual %>%
          log_rainfall=log(rainfall))
 ```
 
-```{r correlation_color, fig.cap="The correlation between rainfall, temperature and bushfires"}
+```{r correlation-color, fig.cap="The correlation between rainfall, temperature and bushfires"}
 
 all_data1 <- all_data %>%
   select(-year,
@@ -904,131 +885,22 @@ corrplot(Cor, method = 'color',
 
 ```
 
-From Figure \@ref(fig:correlation_color), it seems that the rainfall and bushfires have small negative correlation, which is only 30%. This means that if the average annual precipitation increases, the probability of bushfires may decrease with 30% of the increase in precipitation. 
+Figure \@ref(fig:correlation-color) shows that rainfall and bushfires have a small negative correlation 30%. Therefore, if the average rainfall precipitation increases, the probability of bushfires is likely to decrease by approximately 30%. 
 
-As for temperature and bushfires, the correlation between these two variables is only 0.13 which is too close to 0. Therefore, Our group believes that there is no correlation between temperature and occurrence of bushfires in the past 20 years. More data may be needed later to draw the different conclusion.
+As for temperature and bushfires, the correlation between these two variables is only 0.13. Given this correlation is close to 0, there is no correlation between temperature and bushfires in the past 20 years.
 
-Finally, let's observe the precipitation and temperature. The correlation between them is -0.47, which is the largest absolute value among the three correlations, which indicates that their correlation degree is the highest. The correlation coefficient of 0.47 means that if the temperature rises, the precipitation will decrease to 47% of the range that rise. In my opinion, this is because temperatures will impact the rate of evaluation, with higher temperatures leading to drier weather and faster air moisture loss. [@hausfather2018explainer].  
-  
-In conclusion, from corrplot it is clear that the main climatic conditions to affect bushfires is the decreasing of the rainfall. What surprided our group was that the direct effect of temperature rise on Australian bushfires occurrence was almost 0. However, due to the temperature will affect the precipitation and thus the occurrence of bushfires, so people should pay attention to the greenhouse effect and other issues. The upper graphs show that 2019 is the hot and drive year in Australia, which also has the most massive bushfires occurred. That discovery confirms the accuracy of our corrplot again. The increase of temperature leads to the decrease of rainfall have been a primary driver of increases in bushfires area of Australia. [@van2020attribution]
+The correlation between temperature and precipiation is -0.47, which is the largest absolute value among the three correlations. The correlation coefficient of 0.47 means that if the temperature rises, the precipitation will decrease by 47%. Temperature impacts the rate of evaporation, with higher temperatures leading to drier weather and faster air moisture loss [@hausfather2018explainer]. 
 
 # Conclusions {#conclusion}
 
-This analysis has looked at when, where and what climactic condition bushfires are likely to thrive in. Bushfires are common from August to November, and are frequently found in the Northern Territory and Western Australia. High temperature and drought are the two biggest contributors to bushfires[@van2020attribution]. This is consistent with data from 2019, which discovered that it was the hottest and driest year on record with the highest number of bushfires.      
+The analysis has looked into the climactic conditions in Australia. It found that rainfall is quite variable depending on the season, however, Canberra, Adelaide and Melbourne tend to have the lowest amount of rain annually. The warmest climates were Perth and Brisbane. Overtime, annual rainfall is decreasing in each state, and temperature is rising. This is evidence of global warming. 
+
+In addition to considering the climactic conditions in Australia, the analysis looked at when, where and what climactic conditions contribute to the most bushfires. It found that bushfires are common from August to November, and are frequently found in the Northern Territory and Western Australia. 
+
+A correlation plot was used to conclude the analysis and establish whether climactic condition has an affect on the number of bushfires. It revealed that lack of rainfall is likely to have the most dramatic affect on the number of bushfires. This is consistent with 2019, which was one of the driest years and had the highest number of bushfires. This is concerning as the global warming plot indicates that rainfall is decreasing overtime, meaning more bushfires. More should be done to reverse the affects of global warming, and thus reduce the devastation and destruction caused by bushfires.
 
 # Acknowlegments{-}
 
 The authors would like to thank all the contributors to the following R package: @tidyverse,  @ggplot2, @readr, @leaflet, @xts, @here, @base, @ggthemes, @dplyr, @dygraphs, @lulbridate, @ggally, @hrbrthemes.
 
 # References
-
-# Year section
-
-
-
-
-
-
-
-
-
-
->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-## VEGA"S PART (ADDITIONAL TO MASTER)
-
-
-### In which months are bushfires burning? {#month}
-
-
->> When the trend in other years (i.e. 2011 and 2012) seems to reach a peak in August and October respectively, the trend of bushfire in 2019 is still growing until December 2019. Unfortunately, we do not have additional data to see the continuity of the 2019 trend line in 2020. 
-<!-- the main reason for that is the occurrence of extensive bushfires in Australia for 2019.  -->
-
-<!-- And the bushfires from September 2019 is the most massive bushfire since European settlement[@nolan2020causes].  -->
-
->> According to the figure, the most severe bushfire occurs in 2011 with the number of spots reach 120.348 fire spots. We will look further into 2011 in the figure below.
-
-<!-- Moreover, there was a significant increase in the number of bushfires in September 2011, far more than in any other year in the same period.  -->
-
-<!-- <!-- As @blanchi2014environmental states, the combination of low rainfalls and strong winds led to the outbreak of bushfires in 2011.   --> -->
-
-
-
-### Where are the bushfires burning?
- 
-
-Furthermore, we also draw a line that shows national average number of bushfires during 20 years period. Hence, we can see which states/territories that have more bushfires compared to national average. In addition, we are interested to see particular year of 2011 (the worst year) and 2019 (the different pattern).
-
-Figure \@ref(fig:state) shows us that, in general, bushfires are mostly occured in the Northern Territory(NT) and West Australia (WA), possibly because both areas are more likely prone to drought (we will check this assumption in the following section) and comprises of large forests area according to Australia's Department of Agriculture. 
-
-In 2011, NT has very high number of bushfires compared to other states. However, latest massive bushfires in 2019 is mostly occured in area comprises of Victoria and New South Wales. Figure \@ref(fig:map) shows fire spots from the latest bushfires (December 2019 to early January 2020), and we can find that it is mainly concentrated in Victoria and NSW.  
-
-Based on the analysis, we will look at the causes of bushfires in Australia. Are there association between climate conditions to the bushfire? We will explore the story of climate conditions (temperature and rainfall level) in section \@ref(temp) and \@ref(rain).
-
-
-
-## How does temperature and rainfall affect the number of bushfires?
-
-### Positive association with temperature and bushfires {#temp}
-
-This section will be focus on finding clues to answer research question of whether higher temperature contributes to higher frequency of bushfires occurences. Our base assumption is that these two variables have a positive association which means that if the temperature increase the number of fire spots should also increase and vice versa.    
-
-
-
-In order to see the association between temperature and bushfire, we will produce a plot that compares these two variables side by side. To make a more visible pattern, temperature variable will be plotted as a temperature difference from the average temperature during period of observations (2000 - 2020). Mathematically, the temperature difference is formulated as below:
-
-$$ Average\;Temperature\;Difference_n = Annual\;Temperature_n\; - Average\;Temperature\;in\;Period\;of\;Observations$$
-
-
-
-
-
-On the other hand, since the average number of bushfires (fire spots) has different scale with the temperature, we will scale down the annual average bushfires using log 10 and square root. By doing so, we can put the two variables in a single plot to see the patterns of each variables. 
-
-As we can see from figure \@ref(fig:temp-diff), the annual temperature trend seems to rise since 2000 until 2019. Likewise, the annual bushfires also slighlty increase during observed years. **Therefore, we can see a positive association between these two variables, although, the association seems not really strong**. 
-
-As an example, we can see that in 2011 the average bushfires rise sharply (marked by black dashed line) while the temperature only a bit increase from 2010. Another example of the weak association is also shown in the trends during 2015 until 2020. In that period, average bushfires seems to slighlty increase whereas the temperature actually rises significantly. Further analysis on correlation between temperature and bushfires will be discussed in the last section of this paper.    
-
-
-### Negative association with rain and bushfires {#rain}
-
-Has the less rainfall affected the more bushfires in Australia? Or has the more rainfall influenced the less bushfires?   Because of the location of Australia, the rainfall in Australia is highly variable, which is strongly influenced by global climate system phenomena such as El Niño, La Niña, and IOD. Despite this large natural variability, the potential long-term trends are evident in some regions, even effecting the local rainfall.   
-In this section, we will explore the relationship between rainfall and bushfires, is it positive or negative?   
-  
-As a first step, we observe annual rainfall level that retrieved from the rainfall dataset. The interval of observation is ranging from 2000 until 2020.
-
-
-
-Similarly with our previous job when comparing the trend of average temperature to bushfires, we will rescale down the annual average fire spots using log 10 in order to put its trend side by side with average rainfall trend in the same plot. 
-
-As shown in figure \@ref(fig:rain-annual), we can see that, in general, annual rainfall has a **decreasing trend** during the observed period (2000 - 2020), while bushfires has a slightly **rising trend**. Hence, we can assume that rainfall and bushfires are negatively associated. This contrast pattern is quite obvious particularly in 2011 where average fire spots soar as the average rainfall level drops from 4.9 mm in 2010 to 4.15 mm in 2011. After 2015, bushfires is slightly increasing until 2019 as rainfall level continues to drop to its lowest level (2.16 mm) in the same year. 
-
-To complete this analysis, we will check the exact coefficient number of correlation between variable rainfall and bushfires in the following section.  
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
