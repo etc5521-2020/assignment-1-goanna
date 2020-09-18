@@ -897,7 +897,9 @@ The analysis has looked into the climactic conditions in Australia. It found tha
 
 In addition to considering the climactic conditions in Australia, the analysis looked at when, where and what climactic conditions contribute to the most bushfires. It found that bushfires are common from August to November, and are frequently found in the Northern Territory and Western Australia. 
 
-A correlation plot was used to conclude the analysis and establish whether climactic condition has an affect on the number of bushfires. It revealed that lack of rainfall is likely to have the most dramatic affect on the number of bushfires. This is consistent with 2019, which was one of the driest years and had the highest number of bushfires. This is concerning as the global warming plot indicates that rainfall is decreasing overtime, meaning more bushfires. More should be done to reverse the affects of global warming, and thus reduce the devastation and destruction caused by bushfires.
+A correlation plot was used to conclude the analysis and establish whether climactic condition has an affect on the number of bushfires. It revealed that lack of rainfall is likely to have the most dramatic affect on the number of bushfires. Additionally, it showed that there was no correlation between temperature and fire, however, the data used was limiting as the temperature data was for a city (which could be hundreds of kilometres away from the fire it is being correlated to). The findings from the correlation plot was consistent with 2019, as it was one of the driest years and had the highest number of bushfires. 
+
+The global warming plot indicates that rainfall is decreasing overtime, which from the analysis indicates more bushfires. More should be done to reverse the affects of global warming, and thus reduce the devastation and destruction caused by bushfires.
 
 # Acknowlegments{-}
 
