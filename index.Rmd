@@ -195,7 +195,7 @@ rainfall_data%>%
 
 The main limitations of the dataset are concerned with the fire and climate data. 
 
-There is no regional division in the fire data. Therefore, the data has been assigned to a state or reigion based on its longitude and latitude, which may lead to location bias in the analysis. (borders for NSW an VIc not easily distinguished)
+There is no regional division in the fire data. Therefore, the data has been assigned to a state or region based on its longitude and latitude, which may lead to location bias in the analysis.
 
 The rainfall and temperature data has been recorded for some major cities, and the sample is relatively small when compared to the fire data. Therefore, the correlation between the fire and climate data in section \@ref(analysis) may not be precisely accurate as the temperature could be for a city which may be hundreds of kilometres away from the fire it has been correlated to. This may cause a deviation in the results. 
 
@@ -757,7 +757,7 @@ $$ Average\;Temperature\;Difference_n = Annual\;Temperature_n\; - Average\;Tempe
 
 Since the average number of bushfires has different scale to temperatures, the annual average bushfires has been scaled down using log 10 and square root. By doing so, the two variables can be placed in a single plot to see the patterns. 
 
-Figure \@ref(fig:temp-diff1), shows that the annual temperature trend seems to rise from 2000 until 2019, similar to figure \@ref(fig:temp-diff). The average annual number of bushfires has also increased slightly. Therefore, the association seems to be positive, but not strong. As an example, the average number of bushfires rised sharply in 2011 (marked by black dashed line) while the temperature only increased slightly. Additionally, the temperature from 2015 to 2020 has increased dramatically, while the average number of bushfires has only increased slightly. 
+Figure \@ref(fig:temp-diff1), shows that the annual temperature trend seems to rise from 2000 until 2019, similar to figure \@ref(fig:temp-diff). The average annual number of bushfires has also increased slightly. Therefore, the association seems to be positive, but not strong. As an example, the average number of bushfires risen sharply in 2011 (marked by black dashed line) while the temperature only increased slightly. Additionally, the temperature from 2015 to 2020 has increased dramatically, while the average number of bushfires has only increased slightly. 
 
 ### Negative Trend for Bushfires and Rain {#rain}
 
@@ -889,7 +889,7 @@ Figure \@ref(fig:correlation-color) shows that rainfall and bushfires have a sma
 
 As for temperature and bushfires, the correlation between these two variables is only 0.13. Given this correlation is close to 0, there is no correlation between temperature and bushfires in the past 20 years.
 
-The correlation between temperature and precipiation is -0.47, which is the largest absolute value among the three correlations. The correlation coefficient of 0.47 means that if the temperature rises, the precipitation will decrease by 47%. Temperature impacts the rate of evaporation, with higher temperatures leading to drier weather and faster air moisture loss [@hausfather2018explainer]. 
+The correlation between temperature and precipitation is -0.47, which is the largest absolute value among the three correlations. The correlation coefficient of 0.47 means that if the temperature rises, the precipitation will decrease by 47%. Temperature impacts the rate of evaporation, with higher temperatures leading to drier weather and faster air moisture loss [@hausfather2018explainer]. 
 
 # Conclusions {#conclusion}
 
