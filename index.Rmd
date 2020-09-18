@@ -565,7 +565,8 @@ fire <- ggplot(state_fire, aes(x = Year,y = Total)) +
          plot.background = element_rect(fill="white"),
         panel.background = element_rect(fill="white"))+
   geom_hline(yintercept = national_avg, linetype = "dashed", alpha = 0.5)+
-  ggtitle("The number of Bushfires in the last 20 years according to Region")
+  ggtitle("The number of Bushfires in the last 20 years according to Region")+
+  ylab("")
 
   ggplotly(fire)
 
