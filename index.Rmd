@@ -238,7 +238,7 @@ r_agv <- rain_agv %>%
     #theme_bw()+
     xlab("")+
   ylab("")+
-    ggtitle("Average Monthly Rainfall (in mm) in 2011") +
+    ggtitle("Average Monthly Rainfall (in 100 mm) in 2011") +
     facet_wrap(~city_name, nrow = 3) +
     theme(
       panel.grid.minor.y = element_blank(),
@@ -805,7 +805,7 @@ rainfire <- ggplot(rain_vs_fire, aes(x = year)) +
   geom_line(aes(y = avg.x), color = "green", size = 1.1)+
   geom_text(aes(y = log_avg, label = ifelse(year == 2012, "Monthly Average BushFires (scaled down)", "")), cex = 3, nudge_y = 0.25)+ 
   geom_line(aes(y = log_avg), color = "red", size = 1.1)+
-  ylab("Rainfall (mm)")+
+  ylab("Rainfall (in 100mm)")+
   geom_vline(xintercept = 2011, linetype = "dashed")+
   geom_vline(xintercept = 2019, linetype = "dashed")+
   ggtitle("The Average Rainfall vs Bushfire")+
