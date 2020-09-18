@@ -885,11 +885,11 @@ corrplot(Cor, method = 'color',
 
 ```
 
-Figure \@ref(fig:correlation-color) shows that rainfall and bushfires have a small negative correlation 30%. Therefore, if the average rainfall precipitation increases, the probability of bushfires is likely to decrease by approximately 30%. 
+Figure \@ref(fig:correlation-color) shows that rainfall and bushfires have a small negative correlation of 0.3. 
 
-As for temperature and bushfires, the correlation between these two variables is only 0.13. Given this correlation is close to 0, there is no correlation between temperature and bushfires in the past 20 years.
+As for temperature and bushfires, the correlation between these two variables is only 0.13. Given this co-efficient is close to zero, there is almost no correlation between temperature and bushfires in the past 20 years.
 
-The correlation between temperature and precipitation is -0.47, which is the largest absolute value among the three correlations. The correlation coefficient of 0.47 means that if the temperature rises, the precipitation will decrease by 47%. Temperature impacts the rate of evaporation, with higher temperatures leading to drier weather and faster air moisture loss [@hausfather2018explainer]. 
+The correlation between temperature and precipitation is -0.47, which is the largest absolute value among the three correlations. Temperature impacts the rate of evaporation, with higher temperatures leading to drier weather and faster air moisture loss [@hausfather2018explainer]. 
 
 # Conclusions {#conclusion}
 
