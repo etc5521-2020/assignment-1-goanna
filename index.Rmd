@@ -818,13 +818,13 @@ ggplotly(rainfire)
 
 This section is based on the assumption that increased rainfall leads to less bushfires.
 
-Figure \@ref(fig:rain-annual) shows the association between rain and bushfires. Similar to above, the temperature variable has been plotted as a temperature difference from the average temperature during 2000-2020. Since the average number of bushfires has different scale to rainfall, the annual average bushfires has been scaled down using log 10. By doing so, the two variables can be placed in a single plot to see the patterns. 
+Figure \@ref(fig:rain-annual) shows the association between rain and bushfires. The rainfall variable on the y axis shows the average rate of precipitation during 2000-2020. Since the average number of bushfires has different scale to rainfall, the annual average bushfires has been scaled down using log 10. By doing so, the two variables can be placed in a single plot to see the patterns. 
 
-Australia’s location means that rainfall is highly variable. It is strongly influenced by the global climate system phenomena such as El Niño, La Niña, and IOD. However, figure \@ref(fig:rain-annual) shows that the annual rainfall is decreasing. Over this time, the average number of bushfires has increased slightly. It is likely there is a weak negative association.
+As can be seen from figure \@ref(fig:rain-annual), the annual rainfall is decreasing along the period of 20 years. By contrast, the average number of bushfires has increased slightly. From the plot of these two trends, we can see that there is a weak negative association between rainfall and bushfires.
 
 ### What is the correlation between climactic conditions and bushfires?
 
-This section outlines the correlation between climactic conditions and bushfires.
+After seeing relationship pattern in temperature - bushfires, as well as rainfall - bushfires, in this section we will further analyse the data to quantify the relationship between climactic conditions (temperature and rainfall) and bushfires. 
 
 ```{r rainfall-annual-data, warning=FALSE, message=FALSE}
 rain_annual<-rain%>%
@@ -885,11 +885,9 @@ corrplot(Cor, method = 'color',
 
 ```
 
-Figure \@ref(fig:correlation-color) shows that rainfall and bushfires have a small negative correlation of 0.3. 
+Figure \@ref(fig:correlation-color) shows that rainfall and bushfires have a relatively small negative correlation of 0.3. As for temperature and bushfires, the correlation between these two variables is only 0.13. Given this co-efficient is close to zero, we can say that there is almost no correlation between temperature and bushfires in the past 20 years.
 
-As for temperature and bushfires, the correlation between these two variables is only 0.13. Given this co-efficient is close to zero, there is almost no correlation between temperature and bushfires in the past 20 years.
-
-The correlation between temperature and precipitation is -0.47, which is the largest absolute value among the three correlations. Temperature impacts the rate of evaporation, with higher temperatures leading to drier weather and faster air moisture loss [@hausfather2018explainer]. 
+<!-- The correlation between temperature and precipitation is -0.47, which is the largest absolute value among the three correlations. Temperature impacts the rate of evaporation, with higher temperatures leading to drier weather and faster air moisture loss [@hausfather2018explainer].  -->
 
 # Conclusions {#conclusion}
 
