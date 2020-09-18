@@ -3,9 +3,9 @@ title: "ETC5521 Assignment 1"
 subtitle: "Australian bushfires: The effect of climatic condition"
 team: goanna
 author:
-  - XUE WANG
-  - XITONG HE
-  - CUIPING WEI
+  - (XUE WANG)
+  - (XITONG HE)
+  - (CUIPING WEI)
   - Chengzhi Ye
   - Emily Sheehan
   - Dea Avega Editya
@@ -57,7 +57,7 @@ The Australian climate is generally hot and dry, which means that most regions c
 
 Last year, the bushfires in Victoria and New South Wales captured the attention of people worldwide. They caused destruction and devastation for several months. Around 33 lives were lost, over 1 billion mammals died, and over 3,000 homes were destroyed [@bushfires-2020-faq]. 
 
-This analysis hopes to understand the relationship between climactic conditions and bushfires, and determine whether climate change has influenced the number of bushfires. 
+This analysis hopes to understand the relationship between climactic conditions and bushfires, and determine whether climate change has influenced the number of bushfires.
 
 R has been used as the main tool for cleaning and analysis. The analysis proceeds as follows; the data description can be found in section \@ref(data), the limitations in section \@ref(limitation), the findings in section \@ref(analysis) and the conclusion is in section \@ref(conclusion). 
   
@@ -275,6 +275,7 @@ ggplot(data=temperature_year, aes(x=year, y=city_name)) +
   ylab("")
 
 ```
+
 Figure \@ref(fig:heatmap) is a heatmap displaying the daily average temperature for each city. It is clear that the warmest cities are Brisbane and Perth on average. Alarmingly, each area/city is increasing in temperature overtime, which is evidence of global warming. This will be discussed in the next section. 
 
 ### How has climate change impacted weather patterns in Australia?
@@ -565,7 +566,7 @@ fire <- ggplot(state_fire, aes(x = Year,y = Total)) +
          plot.background = element_rect(fill="white"),
         panel.background = element_rect(fill="white"))+
   geom_hline(yintercept = national_avg, linetype = "dashed", alpha = 0.5)+
-  ggtitle("The number of Bushfires in the last 20 years according to Region")+
+  ggtitle("The number of Bushfires in the last 20 years")+
   ylab("")
 
   ggplotly(fire)
@@ -888,7 +889,7 @@ corrplot(Cor, method = 'color',
 
 Figure \@ref(fig:correlation-color) shows that rainfall and bushfires have a relatively small negative correlation of 0.3. As for temperature and bushfires, the correlation between these two variables is only 0.13. Given this co-efficient is close to zero, we can say that there is almost no correlation between temperature and bushfires in the past 20 years.
 
-<!-- The correlation between temperature and precipitation is -0.47, which is the largest absolute value among the three correlations. Temperature impacts the rate of evaporation, with higher temperatures leading to drier weather and faster air moisture loss [@hausfather2018explainer].  -->
+The correlation between temperature and precipitation is -0.47, which is the largest absolute value among the three correlations. Temperature impacts the rate of evaporation, with higher temperatures leading to drier weather and faster air moisture loss [@hausfather2018explainer].  
 
 # Conclusions {#conclusion}
 
